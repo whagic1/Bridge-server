@@ -27,10 +27,6 @@
     0%,100% { opacity: 1; }
     50% { opacity: 0.15; }
   }
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
   @keyframes liveIn {
     0% { opacity: 0; letter-spacing: 0.4em; }
     100% { opacity: 1; letter-spacing: 0.06em; }
@@ -53,7 +49,7 @@
     font-family: 'DM Mono', monospace;
     font-size: 9px; color: #333;
     letter-spacing: 0.22em; text-transform: uppercase;
-    margin-bottom: 8px; display: block;
+    margin-bottom: 10px; display: block;
   }
   .card {
     background: #0f0f0f; border: 1px solid #1a1a1a;
@@ -65,15 +61,24 @@
     letter-spacing: 0.22em; text-transform: uppercase;
     margin-bottom: 14px; display: block;
   }
+  .input-row {
+    display: flex; align-items: center;
+    border-bottom: 1px solid #1e1e1e;
+    padding-bottom: 8px;
+  }
+  .prefix {
+    font-family: 'DM Mono', monospace;
+    font-size: 22px; color: #ff3b30;
+    letter-spacing: 0.05em;
+    flex-shrink: 0; padding-right: 4px;
+  }
   input[type=tel] {
     background: transparent; border: none;
-    border-bottom: 1px solid #1e1e1e;
     outline: none; color: #fff;
     font-family: 'DM Mono', monospace;
     font-size: 22px; width: 100%;
     letter-spacing: 0.05em; padding: 8px 0;
     -webkit-tap-highlight-color: transparent;
-    display: block;
   }
   input::placeholder { color: #252525; }
 
@@ -88,8 +93,7 @@
   }
   .btn-active {
     border: 1px solid rgba(255,59,48,0.5);
-    background: rgba(255,59,48,0.07);
-    color: #ff3b30;
+    background: rgba(255,59,48,0.07); color: #ff3b30;
   }
   .btn-inactive {
     border: 1px solid #181818;
@@ -106,11 +110,9 @@
     user-select: none;
   }
   #glow {
-    position: absolute; width: 300px; height: 300px;
-    border-radius: 50%;
+    position: absolute; width: 300px; height: 300px; border-radius: 50%;
     background: radial-gradient(circle, rgba(255,59,48,1) 0%, transparent 70%);
-    animation: breathe 2.6s ease-in-out infinite;
-    pointer-events: none;
+    animation: breathe 2.6s ease-in-out infinite; pointer-events: none;
   }
   .ring {
     position: absolute; width: 150px; height: 150px;
@@ -226,13 +228,19 @@
   <div class="card">
     <span class="card-label">PERSON A</span>
     <span class="label">Phone Number</span>
-    <input type="tel" id="input-num-a" placeholder="+965 XXXX XXXX" autocomplete="off">
+    <div class="input-row">
+      <span class="prefix">+965</span>
+      <input type="tel" id="input-num-a" placeholder="XXXX XXXX" autocomplete="off" maxlength="8">
+    </div>
   </div>
 
   <div class="card">
     <span class="card-label">PERSON B</span>
     <span class="label">Phone Number</span>
-    <input type="tel" id="input-num-b" placeholder="+965 XXXX XXXX" autocomplete="off">
+    <div class="input-row">
+      <span class="prefix">+965</span>
+      <input type="tel" id="input-num-b" placeholder="XXXX XXXX" autocomplete="off" maxlength="8">
+    </div>
   </div>
 
   <button id="url-toggle" onclick="toggleUrl()">▼ server url</button>
@@ -279,6 +287,10 @@
     return document.getElementById(id).value.trim();
   }
 
+  function fullNumber(id) {
+    return '+965' + getVal(id);
+  }
+
   function showScreen(name) {
     var screens = ['screen-setup','screen-armed','screen-firing','screen-live'];
     for (var i = 0; i < screens.length; i++) {
@@ -293,10 +305,8 @@
 
   function toggleUrl() {
     urlOpen = !urlOpen;
-    var box = document.getElementById('url-box');
-    var btn = document.getElementById('url-toggle');
-    box.style.display = urlOpen ? 'block' : 'none';
-    btn.textContent = urlOpen ? '▲ server url' : '▼ server url';
+    document.getElementById('url-box').style.display = urlOpen ? 'block' : 'none';
+    document.getElementById('url-toggle').textContent = urlOpen ? '▲ server url' : '▼ server url';
   }
 
   function vibe(p) {
@@ -324,7 +334,7 @@
     if (urlVal) SERVER = urlVal;
 
     hasFired = false;
-    document.getElementById('ghost-names').innerHTML = numA + '<br>' + numB;
+    document.getElementById('ghost-names').innerHTML = '+965' + numA + '<br>+965' + numB;
     document.getElementById('armed-sub').textContent = 'anywhere · any finger';
     document.getElementById('armed-sub').style.color = '#222';
 
@@ -345,8 +355,8 @@
     if (hasFired) return;
     hasFired = true;
 
-    var numA = getVal('input-num-a');
-    var numB = getVal('input-num-b');
+    var numA = fullNumber('input-num-a');
+    var numB = fullNumber('input-num-b');
 
     vibe([180]);
     document.getElementById('firing-sub').textContent = numA + ' · ' + numB;
