@@ -35,10 +35,11 @@ app.post("/bridge", async (req, res) => {
   console.log("Calling A:", numberA);
   console.log("Calling B:", numberB);
 
+  // timeLimit="7" = 7 seconds after both answer then auto-disconnect
   const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Dial>
-    <Conference beep="false" startConferenceOnEnter="true" endConferenceOnExit="true" waitUrl="" waitMethod="GET">${roomName}</Conference>
+    <Conference beep="false" startConferenceOnEnter="true" endConferenceOnExit="true" waitUrl="" waitMethod="GET" timeLimit="7">${roomName}</Conference>
   </Dial>
 </Response>`;
 
@@ -56,19 +57,6 @@ app.post("/bridge", async (req, res) => {
       twiml: twiml,
     });
     console.log("Call B SID:", callB.sid);
-
-    // Wait 7 seconds after BOTH calls are created then end them
-    setTimeout(async function() {
-      console.log("Auto-ending calls after 7 seconds");
-      try {
-        await client.calls(callA.sid).update({ status: "completed" });
-        console.log("Call A ended");
-      } catch(e) { console.log("Call A already ended:", e.message); }
-      try {
-        await client.calls(callB.sid).update({ status: "completed" });
-        console.log("Call B ended");
-      } catch(e) { console.log("Call B already ended:", e.message); }
-    }, 7000);
 
     res.json({
       success:  true,
