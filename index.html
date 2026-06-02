@@ -65,14 +65,12 @@
     letter-spacing: 0.22em; text-transform: uppercase;
     margin-bottom: 14px; display: block;
   }
-  .field { margin-bottom: 16px; }
-  .field:last-child { margin-bottom: 0; }
-  input[type=text], input[type=tel] {
+  input[type=tel] {
     background: transparent; border: none;
     border-bottom: 1px solid #1e1e1e;
     outline: none; color: #fff;
     font-family: 'DM Mono', monospace;
-    font-size: 18px; width: 100%;
+    font-size: 22px; width: 100%;
     letter-spacing: 0.05em; padding: 8px 0;
     -webkit-tap-highlight-color: transparent;
     display: block;
@@ -140,7 +138,7 @@
     position: absolute; bottom: 36px;
     left: 0; right: 0; text-align: center;
     font-family: 'DM Mono', monospace;
-    font-size: 10px; color: #181818;
+    font-size: 11px; color: #1a1a1a;
     letter-spacing: 0.1em; line-height: 2.5;
     pointer-events: none;
   }
@@ -188,7 +186,7 @@
     font-size: 72px; color: #fff;
     letter-spacing: 0.06em; animation: liveIn 0.5s ease both;
   }
-  #live-names {
+  #live-numbers {
     font-family: 'DM Mono', monospace;
     font-size: 12px; color: #2e2e2e;
     letter-spacing: 0.08em; text-align: center; line-height: 2.6;
@@ -205,7 +203,7 @@
   #url-toggle {
     background: none; border: none;
     font-family: 'DM Mono', monospace;
-    font-size: 9px; color: #222;
+    font-size: 9px; color: #1e1e1e;
     letter-spacing: 0.15em; text-transform: uppercase;
     cursor: pointer; padding: 8px 0; display: block;
   }
@@ -227,33 +225,21 @@
 
   <div class="card">
     <span class="card-label">PERSON A</span>
-    <div class="field">
-      <span class="label">Name</span>
-      <input type="text" id="input-name-a" placeholder="Ahmed" autocomplete="off" autocorrect="off" spellcheck="false">
-    </div>
-    <div class="field">
-      <span class="label">Phone Number</span>
-      <input type="tel" id="input-num-a" placeholder="+965 XXXX XXXX" autocomplete="off">
-    </div>
+    <span class="label">Phone Number</span>
+    <input type="tel" id="input-num-a" placeholder="+965 XXXX XXXX" autocomplete="off">
   </div>
 
   <div class="card">
     <span class="card-label">PERSON B</span>
-    <div class="field">
-      <span class="label">Name</span>
-      <input type="text" id="input-name-b" placeholder="Sara" autocomplete="off" autocorrect="off" spellcheck="false">
-    </div>
-    <div class="field">
-      <span class="label">Phone Number</span>
-      <input type="tel" id="input-num-b" placeholder="+965 XXXX XXXX" autocomplete="off">
-    </div>
+    <span class="label">Phone Number</span>
+    <input type="tel" id="input-num-b" placeholder="+965 XXXX XXXX" autocomplete="off">
   </div>
 
   <button id="url-toggle" onclick="toggleUrl()">▼ server url</button>
   <input type="url" id="url-box" value="https://bridge-server-production-a25d.up.railway.app">
 
   <div style="flex:1"></div>
-  <button class="btn-main btn-inactive" id="arm-btn" onclick="arm()">ENTER BOTH PEOPLE</button>
+  <button class="btn-main btn-inactive" id="arm-btn" onclick="arm()">ENTER BOTH NUMBERS</button>
 </div>
 
 <!-- ARMED -->
@@ -279,7 +265,7 @@
 <div id="screen-live" class="hidden">
   <div id="live-dot"></div>
   <div id="live-text">LIVE</div>
-  <div id="live-names"></div>
+  <div id="live-numbers"></div>
   <button id="end-btn" onclick="resetApp()">end + reset</button>
 </div>
 
@@ -294,7 +280,7 @@
   }
 
   function showScreen(name) {
-    var screens = ['screen-setup', 'screen-armed', 'screen-firing', 'screen-live'];
+    var screens = ['screen-setup','screen-armed','screen-firing','screen-live'];
     for (var i = 0; i < screens.length; i++) {
       var el = document.getElementById(screens[i]);
       if (screens[i] === name) {
@@ -318,33 +304,27 @@
   }
 
   function checkReady() {
-    var nameA = getVal('input-name-a');
-    var numA  = getVal('input-num-a');
-    var nameB = getVal('input-name-b');
-    var numB  = getVal('input-num-b');
-    var btn   = document.getElementById('arm-btn');
-    var ready = nameA.length > 0 && numA.length >= 7 && nameB.length > 0 && numB.length >= 7;
+    var numA = getVal('input-num-a');
+    var numB = getVal('input-num-b');
+    var btn  = document.getElementById('arm-btn');
+    var ready = numA.length >= 7 && numB.length >= 7;
     btn.className = 'btn-main ' + (ready ? 'btn-active' : 'btn-inactive');
-    btn.textContent = ready ? 'ARM' : 'ENTER BOTH PEOPLE';
+    btn.textContent = ready ? 'ARM' : 'ENTER BOTH NUMBERS';
   }
 
-  document.getElementById('input-name-a').addEventListener('input', checkReady);
   document.getElementById('input-num-a').addEventListener('input', checkReady);
-  document.getElementById('input-name-b').addEventListener('input', checkReady);
   document.getElementById('input-num-b').addEventListener('input', checkReady);
 
   function arm() {
-    var nameA = getVal('input-name-a');
-    var numA  = getVal('input-num-a');
-    var nameB = getVal('input-name-b');
-    var numB  = getVal('input-num-b');
-    if (!nameA || numA.length < 7 || !nameB || numB.length < 7) return;
+    var numA = getVal('input-num-a');
+    var numB = getVal('input-num-b');
+    if (numA.length < 7 || numB.length < 7) return;
 
     var urlVal = document.getElementById('url-box').value.trim();
     if (urlVal) SERVER = urlVal;
 
     hasFired = false;
-    document.getElementById('ghost-names').innerHTML = nameA + ' · ' + numA + '<br>' + nameB + ' · ' + numB;
+    document.getElementById('ghost-names').innerHTML = numA + '<br>' + numB;
     document.getElementById('armed-sub').textContent = 'anywhere · any finger';
     document.getElementById('armed-sub').style.color = '#222';
 
@@ -365,15 +345,11 @@
     if (hasFired) return;
     hasFired = true;
 
-    var nameA = getVal('input-name-a');
-    var numA  = getVal('input-num-a');
-    var nameB = getVal('input-name-b');
-    var numB  = getVal('input-num-b');
-
-    console.log('FIRING — A:', numA, 'B:', numB);
+    var numA = getVal('input-num-a');
+    var numB = getVal('input-num-b');
 
     vibe([180]);
-    document.getElementById('firing-sub').textContent = nameA + ' ← → ' + nameB;
+    document.getElementById('firing-sub').textContent = numA + ' · ' + numB;
     showScreen('screen-firing');
 
     fetch(SERVER + '/bridge', {
@@ -385,17 +361,16 @@
     .then(function(data) {
       if (data.error) throw new Error(data.error);
       callSids = { callASid: data.callASid, callBSid: data.callBSid };
-      document.getElementById('live-names').innerHTML =
-        '<span style="color:#383838">' + nameA + '</span><br>' +
+      document.getElementById('live-numbers').innerHTML =
+        '<span style="color:#383838">' + numA + '</span><br>' +
         '<span style="color:#1e1e1e;font-size:10px">⟷ connected ⟷</span><br>' +
-        '<span style="color:#383838">' + nameB + '</span>';
+        '<span style="color:#383838">' + numB + '</span>';
       showScreen('screen-live');
-      vibe([50, 30, 50, 30, 50]);
+      vibe([50,30,50,30,50]);
     })
     .catch(function(err) {
-      console.log('ERROR:', err.message);
       hasFired = false;
-      document.getElementById('armed-sub').textContent = 'RETRY — ' + err.message;
+      document.getElementById('armed-sub').textContent = 'RETRY';
       document.getElementById('armed-sub').style.color = '#ff3b30';
       showScreen('screen-armed');
       vibe([400]);
@@ -416,9 +391,7 @@
     }
     callSids = null;
     hasFired = false;
-    document.getElementById('input-name-a').value = '';
     document.getElementById('input-num-a').value = '';
-    document.getElementById('input-name-b').value = '';
     document.getElementById('input-num-b').value = '';
     checkReady();
     showScreen('screen-setup');
