@@ -14,46 +14,52 @@ const client = twilio(
 );
 
 app.get("/health", (req, res) => {
-  res.json({ status: "ok", message: "Bridge server running" });
+  res.json({ status: "ok" });
 });
 
 app.post("/bridge", async (req, res) => {
-  const { numberA, numberB } = req.body;
+  console.log("BRIDGE REQUEST BODY:", JSON.stringify(req.body));
+
+  const numberA = req.body.numberA;
+  const numberB = req.body.numberB;
+
+  console.log("Number A:", numberA);
+  console.log("Number B:", numberB);
 
   if (!numberA || !numberB) {
+    console.log("MISSING NUMBERS");
     return res.status(400).json({ error: "Both numbers required" });
   }
 
-  const roomName = `show_${Date.now()}`;
+  const roomName = "show_" + Date.now();
+  const from = process.env.TWILIO_FROM_NUMBER;
 
-  const confTwiml = (room) => `<?xml version="1.0" encoding="UTF-8"?>
+  console.log("Room:", roomName);
+  console.log("From:", from);
+
+  const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Dial>
-    <Conference
-      beep="false"
-      startConferenceOnEnter="true"
-      endConferenceOnExit="true"
-      waitUrl=""
-      waitMethod="GET"
-    >${room}</Conference>
+    <Conference beep="false" startConferenceOnEnter="true" endConferenceOnExit="true" waitUrl="" waitMethod="GET">${roomName}</Conference>
   </Dial>
 </Response>`;
 
   try {
-    const [callA, callB] = await Promise.all([
-      client.calls.create({
-        to:   numberA,
-        from: process.env.TWILIO_FROM_NUMBER,
-        twiml: confTwiml(roomName),
-      }),
-      client.calls.create({
-        to:   numberB,
-        from: process.env.TWILIO_FROM_NUMBER,
-        twiml: confTwiml(roomName),
-      }),
-    ]);
+    console.log("Calling A:", numberA);
+    const callA = await client.calls.create({
+      to:    numberA,
+      from:  from,
+      twiml: twiml,
+    });
+    console.log("Call A SID:", callA.sid);
 
-    console.log(`🎭 BRIDGE FIRED — Room: ${roomName}`);
+    console.log("Calling B:", numberB);
+    const callB = await client.calls.create({
+      to:    numberB,
+      from:  from,
+      twiml: twiml,
+    });
+    console.log("Call B SID:", callB.sid);
 
     res.json({
       success:  true,
@@ -63,7 +69,7 @@ app.post("/bridge", async (req, res) => {
     });
 
   } catch (err) {
-    console.error("[ERROR]", err.message);
+    console.log("ERROR:", err.message);
     res.status(500).json({ error: err.message });
   }
 });
@@ -83,5 +89,5 @@ app.post("/end", async (req, res) => {
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-  console.log(`🎭 Bridge server live on port ${PORT}`);
+  console.log("Bridge server on port " + PORT);
 });
