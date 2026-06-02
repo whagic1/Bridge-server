@@ -17,7 +17,6 @@ app.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
-// ── Original 2-person bridge (keep for backward compat) ───────────
 app.post("/bridge", async (req, res) => {
   console.log("BRIDGE REQUEST:", JSON.stringify(req.body));
 
@@ -29,7 +28,9 @@ app.post("/bridge", async (req, res) => {
   }
 
   const roomName = "show_" + Date.now();
-  const from = process.env.TWILIO_FROM_NUMBER;
+  const from = process.env.TWILIO_FROM_NUMBER1;
+
+  console.log("From:", from);
 
   const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
@@ -56,7 +57,6 @@ app.post("/bridge", async (req, res) => {
   }
 });
 
-// ── Multi-person bridge — entire room ─────────────────────────────
 app.post("/bridge-all", async (req, res) => {
   console.log("BRIDGE-ALL REQUEST:", JSON.stringify(req.body));
 
@@ -67,9 +67,10 @@ app.post("/bridge-all", async (req, res) => {
   }
 
   const roomName = "show_" + Date.now();
-  const from = process.env.TWILIO_FROM_NUMBER;
+  const from = process.env.TWILIO_FROM_NUMBER1;
 
   console.log("Room:", roomName);
+  console.log("From:", from);
   console.log("Calling", numbers.length, "numbers:", numbers);
 
   const twiml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -81,7 +82,6 @@ app.post("/bridge-all", async (req, res) => {
 
   try {
     const callSids = [];
-
     for (var i = 0; i < numbers.length; i++) {
       console.log("Calling:", numbers[i]);
       const call = await client.calls.create({
@@ -94,10 +94,10 @@ app.post("/bridge-all", async (req, res) => {
     }
 
     res.json({
-      success:   true,
-      room:      roomName,
-      callSids:  callSids,
-      count:     callSids.length,
+      success:  true,
+      room:     roomName,
+      callSids: callSids,
+      count:    callSids.length,
     });
 
   } catch (err) {
@@ -106,7 +106,6 @@ app.post("/bridge-all", async (req, res) => {
   }
 });
 
-// ── End 2-person bridge ───────────────────────────────────────────
 app.post("/end", async (req, res) => {
   const { callASid, callBSid } = req.body;
   try {
@@ -120,12 +119,9 @@ app.post("/end", async (req, res) => {
   }
 });
 
-// ── End all calls ─────────────────────────────────────────────────
 app.post("/end-all", async (req, res) => {
   const { callSids } = req.body;
-  if (!callSids || callSids.length === 0) {
-    return res.json({ success: true });
-  }
+  if (!callSids || callSids.length === 0) return res.json({ success: true });
   try {
     await Promise.all(
       callSids.map(sid => client.calls(sid).update({ status: "completed" }))
