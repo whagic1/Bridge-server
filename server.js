@@ -17,25 +17,19 @@ app.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
+// ── Original 2-person bridge (keep for backward compat) ───────────
 app.post("/bridge", async (req, res) => {
-  console.log("BRIDGE REQUEST BODY:", JSON.stringify(req.body));
+  console.log("BRIDGE REQUEST:", JSON.stringify(req.body));
 
   const numberA = req.body.numberA;
   const numberB = req.body.numberB;
 
-  console.log("Number A:", numberA);
-  console.log("Number B:", numberB);
-
   if (!numberA || !numberB) {
-    console.log("MISSING NUMBERS");
     return res.status(400).json({ error: "Both numbers required" });
   }
 
   const roomName = "show_" + Date.now();
   const from = process.env.TWILIO_FROM_NUMBER;
-
-  console.log("Room:", roomName);
-  console.log("From:", from);
 
   const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
@@ -45,27 +39,65 @@ app.post("/bridge", async (req, res) => {
 </Response>`;
 
   try {
-    console.log("Calling A:", numberA);
-    const callA = await client.calls.create({
-      to:    numberA,
-      from:  from,
-      twiml: twiml,
-    });
+    const callA = await client.calls.create({ to: numberA, from: from, twiml: twiml });
     console.log("Call A SID:", callA.sid);
-
-    console.log("Calling B:", numberB);
-    const callB = await client.calls.create({
-      to:    numberB,
-      from:  from,
-      twiml: twiml,
-    });
+    const callB = await client.calls.create({ to: numberB, from: from, twiml: twiml });
     console.log("Call B SID:", callB.sid);
 
     res.json({
-      success:  true,
-      room:     roomName,
+      success: true,
+      room: roomName,
       callASid: callA.sid,
       callBSid: callB.sid,
+    });
+  } catch (err) {
+    console.log("ERROR:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Multi-person bridge — entire room ─────────────────────────────
+app.post("/bridge-all", async (req, res) => {
+  console.log("BRIDGE-ALL REQUEST:", JSON.stringify(req.body));
+
+  const numbers = req.body.numbers;
+
+  if (!numbers || numbers.length < 2) {
+    return res.status(400).json({ error: "At least 2 numbers required" });
+  }
+
+  const roomName = "show_" + Date.now();
+  const from = process.env.TWILIO_FROM_NUMBER;
+
+  console.log("Room:", roomName);
+  console.log("Calling", numbers.length, "numbers:", numbers);
+
+  const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Dial>
+    <Conference beep="false" startConferenceOnEnter="true" endConferenceOnExit="true" waitUrl="" waitMethod="GET">${roomName}</Conference>
+  </Dial>
+</Response>`;
+
+  try {
+    const callSids = [];
+
+    for (var i = 0; i < numbers.length; i++) {
+      console.log("Calling:", numbers[i]);
+      const call = await client.calls.create({
+        to:    numbers[i],
+        from:  from,
+        twiml: twiml,
+      });
+      console.log("SID:", call.sid, "→", numbers[i]);
+      callSids.push(call.sid);
+    }
+
+    res.json({
+      success:   true,
+      room:      roomName,
+      callSids:  callSids,
+      count:     callSids.length,
     });
 
   } catch (err) {
@@ -74,6 +106,7 @@ app.post("/bridge", async (req, res) => {
   }
 });
 
+// ── End 2-person bridge ───────────────────────────────────────────
 app.post("/end", async (req, res) => {
   const { callASid, callBSid } = req.body;
   try {
@@ -81,6 +114,22 @@ app.post("/end", async (req, res) => {
     if (callASid) ops.push(client.calls(callASid).update({ status: "completed" }));
     if (callBSid) ops.push(client.calls(callBSid).update({ status: "completed" }));
     await Promise.all(ops);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── End all calls ─────────────────────────────────────────────────
+app.post("/end-all", async (req, res) => {
+  const { callSids } = req.body;
+  if (!callSids || callSids.length === 0) {
+    return res.json({ success: true });
+  }
+  try {
+    await Promise.all(
+      callSids.map(sid => client.calls(sid).update({ status: "completed" }))
+    );
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
