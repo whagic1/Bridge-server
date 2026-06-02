@@ -31,11 +31,6 @@
     from { opacity: 0; transform: translateY(8px); }
     to { opacity: 1; transform: translateY(0); }
   }
-  @keyframes flashBg {
-    0% { background: #0a0a0a; }
-    20% { background: #1c0000; }
-    100% { background: #0a0a0a; }
-  }
   @keyframes liveIn {
     0% { opacity: 0; letter-spacing: 0.4em; }
     100% { opacity: 1; letter-spacing: 0.06em; }
@@ -58,31 +53,32 @@
     font-family: 'DM Mono', monospace;
     font-size: 9px; color: #333;
     letter-spacing: 0.22em; text-transform: uppercase;
-    margin-bottom: 8px;
+    margin-bottom: 8px; display: block;
   }
-  .input-row {
-    border-bottom: 1px solid #181818;
-    padding-bottom: 14px; margin-bottom: 14px;
-  }
-  input {
-    background: transparent; border: none; outline: none;
-    color: #fff; font-family: 'DM Mono', monospace;
-    font-size: 18px; width: 100%;
-    letter-spacing: 0.05em;
-    -webkit-tap-highlight-color: transparent;
-  }
-  input::placeholder { color: #252525; }
   .card {
     background: #0f0f0f; border: 1px solid #1a1a1a;
     border-radius: 14px; padding: 20px; margin-bottom: 12px;
-    animation: fadeUp 0.3s ease both;
   }
   .card-label {
     font-family: 'DM Mono', monospace;
     font-size: 9px; color: #ff3b30;
     letter-spacing: 0.22em; text-transform: uppercase;
-    margin-bottom: 14px;
+    margin-bottom: 14px; display: block;
   }
+  .field { margin-bottom: 16px; }
+  .field:last-child { margin-bottom: 0; }
+  input[type=text], input[type=tel] {
+    background: transparent; border: none;
+    border-bottom: 1px solid #1e1e1e;
+    outline: none; color: #fff;
+    font-family: 'DM Mono', monospace;
+    font-size: 18px; width: 100%;
+    letter-spacing: 0.05em; padding: 8px 0;
+    -webkit-tap-highlight-color: transparent;
+    display: block;
+  }
+  input::placeholder { color: #252525; }
+
   .btn-main {
     width: 100%; padding: 20px;
     border-radius: 14px;
@@ -90,69 +86,49 @@
     font-size: 22px; letter-spacing: 0.12em;
     cursor: pointer; transition: all 0.2s;
     -webkit-tap-highlight-color: transparent;
+    display: block;
   }
-  .btn-main.active {
+  .btn-active {
     border: 1px solid rgba(255,59,48,0.5);
     background: rgba(255,59,48,0.07);
     color: #ff3b30;
   }
-  .btn-main.inactive {
+  .btn-inactive {
     border: 1px solid #181818;
     background: transparent; color: #282828;
+    cursor: not-allowed;
   }
-  .btn-ghost {
-    width: 100%; padding: 14px;
-    background: none; border: 1px solid #1a1a1a;
-    border-radius: 12px; color: #2a2a2a;
-    font-family: 'DM Mono', monospace;
-    font-size: 10px; letter-spacing: 0.2em;
-    text-transform: uppercase; cursor: pointer;
-    margin-top: 10px;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .dot {
-    width: 7px; height: 7px; border-radius: 50%;
-    display: inline-block; margin-left: 8px;
-    vertical-align: middle;
-  }
-  .dot-red { background: #ff3b30; box-shadow: 0 0 8px rgba(255,59,48,0.7); }
-  .dot-green { background: #34c759; box-shadow: 0 0 8px rgba(52,199,89,0.7); }
 
-  /* ARMED SCREEN */
   #screen-armed {
     position: fixed; inset: 0;
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
-    background: #0a0a0a;
-    cursor: pointer;
+    background: #0a0a0a; cursor: pointer;
     -webkit-tap-highlight-color: transparent;
     user-select: none;
   }
   #glow {
-    position: absolute;
-    width: 300px; height: 300px; border-radius: 50%;
+    position: absolute; width: 300px; height: 300px;
+    border-radius: 50%;
     background: radial-gradient(circle, rgba(255,59,48,1) 0%, transparent 70%);
     animation: breathe 2.6s ease-in-out infinite;
     pointer-events: none;
   }
   .ring {
-    position: absolute;
-    width: 150px; height: 150px; border-radius: 50%;
-    pointer-events: none;
+    position: absolute; width: 150px; height: 150px;
+    border-radius: 50%; pointer-events: none;
   }
   #ring1 { border: 1px solid rgba(255,59,48,0.4); animation: ripple 1.7s ease-out infinite; }
   #ring2 { border: 1px solid rgba(255,59,48,0.2); animation: ripple2 1.7s ease-out 0.6s infinite; }
   #center-dot {
     width: 12px; height: 12px; border-radius: 50%;
-    background: #ff3b30;
-    box-shadow: 0 0 24px rgba(255,59,48,0.9);
+    background: #ff3b30; box-shadow: 0 0 24px rgba(255,59,48,0.9);
     z-index: 2; margin-bottom: 24px;
   }
   #tap-word {
     font-family: 'Bebas Neue', sans-serif;
     font-size: 96px; color: #fff;
-    letter-spacing: 0.06em; line-height: 1;
-    z-index: 2; transition: transform 0.08s ease;
+    letter-spacing: 0.06em; line-height: 1; z-index: 2;
   }
   #armed-sub {
     font-family: 'DM Mono', monospace;
@@ -161,25 +137,21 @@
     z-index: 2; margin-top: 14px;
   }
   #ghost-names {
-    position: absolute;
-    bottom: 36px; left: 0; right: 0; text-align: center;
+    position: absolute; bottom: 36px;
+    left: 0; right: 0; text-align: center;
     font-family: 'DM Mono', monospace;
     font-size: 10px; color: #181818;
     letter-spacing: 0.1em; line-height: 2.5;
     pointer-events: none;
   }
   #disarm-btn {
-    position: absolute;
-    top: 20px; right: 20px;
+    position: absolute; top: 20px; right: 20px;
     background: none; border: none;
     font-family: 'DM Mono', monospace;
     font-size: 9px; color: #1c1c1c;
-    letter-spacing: 0.15em; cursor: pointer;
-    padding: 12px;
+    cursor: pointer; padding: 12px;
     -webkit-tap-highlight-color: transparent;
   }
-
-  /* FIRING SCREEN */
   #screen-firing {
     position: fixed; inset: 0;
     display: flex; flex-direction: column;
@@ -188,23 +160,18 @@
   }
   #firing-dot {
     width: 10px; height: 10px; border-radius: 50%;
-    background: #ff3b30;
-    animation: blink 0.7s infinite;
+    background: #ff3b30; animation: blink 0.7s infinite;
     box-shadow: 0 0 16px rgba(255,59,48,0.8);
   }
   #firing-text {
     font-family: 'Bebas Neue', sans-serif;
     font-size: 56px; color: #ff3b30;
-    letter-spacing: 0.08em;
-    animation: blink 1s infinite;
+    letter-spacing: 0.08em; animation: blink 1s infinite;
   }
   #firing-sub {
     font-family: 'DM Mono', monospace;
-    font-size: 10px; color: #282828;
-    letter-spacing: 0.2em;
+    font-size: 10px; color: #282828; letter-spacing: 0.2em;
   }
-
-  /* LIVE SCREEN */
   #screen-live {
     position: fixed; inset: 0;
     display: flex; flex-direction: column;
@@ -213,95 +180,84 @@
   }
   #live-dot {
     width: 10px; height: 10px; border-radius: 50%;
-    background: #ff3b30;
-    box-shadow: 0 0 22px rgba(255,59,48,0.9);
-    animation: blink 1.4s ease-in-out infinite;
-    margin-bottom: 6px;
+    background: #ff3b30; box-shadow: 0 0 22px rgba(255,59,48,0.9);
+    animation: blink 1.4s ease-in-out infinite; margin-bottom: 6px;
   }
   #live-text {
     font-family: 'Bebas Neue', sans-serif;
     font-size: 72px; color: #fff;
-    letter-spacing: 0.06em;
-    animation: liveIn 0.5s ease both;
+    letter-spacing: 0.06em; animation: liveIn 0.5s ease both;
   }
   #live-names {
     font-family: 'DM Mono', monospace;
     font-size: 12px; color: #2e2e2e;
-    letter-spacing: 0.08em; text-align: center;
-    line-height: 2.6;
-    animation: fadeUp 0.5s 0.2s ease both;
+    letter-spacing: 0.08em; text-align: center; line-height: 2.6;
   }
   #end-btn {
-    margin-top: 52px;
-    background: none; border: 1px solid #1a1a1a;
-    border-radius: 12px; padding: 16px 40px;
-    color: #282828; font-family: 'DM Mono', monospace;
+    margin-top: 52px; background: none;
+    border: 1px solid #1a1a1a; border-radius: 12px;
+    padding: 16px 40px; color: #282828;
+    font-family: 'DM Mono', monospace;
     font-size: 10px; letter-spacing: 0.2em;
     text-transform: uppercase; cursor: pointer;
     -webkit-tap-highlight-color: transparent;
   }
-
-  /* URL config */
   #url-toggle {
     background: none; border: none;
     font-family: 'DM Mono', monospace;
     font-size: 9px; color: #222;
     letter-spacing: 0.15em; text-transform: uppercase;
     cursor: pointer; padding: 8px 0; display: block;
-    margin-bottom: 6px;
   }
-  #url-input {
+  #url-box {
     width: 100%; background: #111;
     border: 1px solid #1e1e1e; border-radius: 8px;
     padding: 11px 12px; color: #555;
     font-family: 'DM Mono', monospace;
-    font-size: 12px; outline: none;
-    margin-bottom: 14px;
+    font-size: 12px; outline: none; margin-bottom: 14px;
+    display: none;
   }
 </style>
 </head>
 <body>
 
-<!-- SETUP SCREEN -->
+<!-- SETUP -->
 <div id="screen-setup" class="page">
   <div class="page-title">Setup<br><span class="red">Bridge</span></div>
 
   <div class="card">
-    <div class="card-label">PERSON A</div>
-    <div class="input-row">
-      <div class="label">Name</div>
-      <input type="text" id="nameA" placeholder="Ahmed" autocomplete="off">
+    <span class="card-label">PERSON A</span>
+    <div class="field">
+      <span class="label">Name</span>
+      <input type="text" id="input-name-a" placeholder="Ahmed" autocomplete="off" autocorrect="off" spellcheck="false">
     </div>
-    <div class="input-row" style="border:none;padding:0;margin:0">
-      <div class="label">Phone Number</div>
-      <input type="tel" id="numA" placeholder="+965 XXXX XXXX" autocomplete="off">
+    <div class="field">
+      <span class="label">Phone Number</span>
+      <input type="tel" id="input-num-a" placeholder="+965 XXXX XXXX" autocomplete="off">
     </div>
   </div>
 
   <div class="card">
-    <div class="card-label">PERSON B</div>
-    <div class="input-row">
-      <div class="label">Name</div>
-      <input type="text" id="nameB" placeholder="Sara" autocomplete="off">
+    <span class="card-label">PERSON B</span>
+    <div class="field">
+      <span class="label">Name</span>
+      <input type="text" id="input-name-b" placeholder="Sara" autocomplete="off" autocorrect="off" spellcheck="false">
     </div>
-    <div class="input-row" style="border:none;padding:0;margin:0">
-      <div class="label">Phone Number</div>
-      <input type="tel" id="numB" placeholder="+965 XXXX XXXX" autocomplete="off">
+    <div class="field">
+      <span class="label">Phone Number</span>
+      <input type="tel" id="input-num-b" placeholder="+965 XXXX XXXX" autocomplete="off">
     </div>
   </div>
 
   <button id="url-toggle" onclick="toggleUrl()">▼ server url</button>
-  <input type="url" id="url-input" class="hidden"
-    value="https://bridge-server-production-a25d.up.railway.app"
-    placeholder="https://your-server.up.railway.app">
+  <input type="url" id="url-box" value="https://bridge-server-production-a25d.up.railway.app">
 
   <div style="flex:1"></div>
-
-  <button class="btn-main inactive" id="arm-btn" onclick="arm()">ENTER BOTH PEOPLE</button>
+  <button class="btn-main btn-inactive" id="arm-btn" onclick="arm()">ENTER BOTH PEOPLE</button>
 </div>
 
-<!-- ARMED SCREEN -->
-<div id="screen-armed" class="hidden" onclick="fire()" ontouchstart="fire()">
+<!-- ARMED -->
+<div id="screen-armed" class="hidden">
   <div id="glow"></div>
   <div class="ring" id="ring1"></div>
   <div class="ring" id="ring2"></div>
@@ -312,134 +268,161 @@
   <button id="disarm-btn" onclick="disarm(event)">✕</button>
 </div>
 
-<!-- FIRING SCREEN -->
+<!-- FIRING -->
 <div id="screen-firing" class="hidden">
   <div id="firing-dot"></div>
   <div id="firing-text">RINGING</div>
-  <div id="firing-sub" id="firing-names"></div>
+  <div id="firing-sub"></div>
 </div>
 
-<!-- LIVE SCREEN -->
+<!-- LIVE -->
 <div id="screen-live" class="hidden">
   <div id="live-dot"></div>
   <div id="live-text">LIVE</div>
   <div id="live-names"></div>
-  <button id="end-btn" onclick="reset()">end + reset</button>
+  <button id="end-btn" onclick="resetApp()">end + reset</button>
 </div>
 
 <script>
-  const BACKEND = () => document.getElementById('url-input').value || 'https://bridge-server-production-a25d.up.railway.app';
+  var SERVER = 'https://bridge-server-production-a25d.up.railway.app';
+  var callSids = null;
+  var hasFired = false;
+  var urlOpen = false;
 
-  let callSids = null;
-  let fired = false;
-  let urlVisible = false;
+  function getVal(id) {
+    return document.getElementById(id).value.trim();
+  }
 
-  function show(id) {
-    ['screen-setup','screen-armed','screen-firing','screen-live'].forEach(s => {
-      document.getElementById(s).classList.toggle('hidden', s !== id);
-    });
+  function showScreen(name) {
+    var screens = ['screen-setup', 'screen-armed', 'screen-firing', 'screen-live'];
+    for (var i = 0; i < screens.length; i++) {
+      var el = document.getElementById(screens[i]);
+      if (screens[i] === name) {
+        el.classList.remove('hidden');
+      } else {
+        el.classList.add('hidden');
+      }
+    }
   }
 
   function toggleUrl() {
-    urlVisible = !urlVisible;
-    document.getElementById('url-input').classList.toggle('hidden', !urlVisible);
-    document.getElementById('url-toggle').textContent = urlVisible ? '▲ server url' : '▼ server url';
+    urlOpen = !urlOpen;
+    var box = document.getElementById('url-box');
+    var btn = document.getElementById('url-toggle');
+    box.style.display = urlOpen ? 'block' : 'none';
+    btn.textContent = urlOpen ? '▲ server url' : '▼ server url';
   }
 
-  function vibe(p) { try { navigator.vibrate && navigator.vibrate(p); } catch(e){} }
+  function vibe(p) {
+    try { if (navigator.vibrate) navigator.vibrate(p); } catch(e) {}
+  }
+
+  function checkReady() {
+    var nameA = getVal('input-name-a');
+    var numA  = getVal('input-num-a');
+    var nameB = getVal('input-name-b');
+    var numB  = getVal('input-num-b');
+    var btn   = document.getElementById('arm-btn');
+    var ready = nameA.length > 0 && numA.length >= 7 && nameB.length > 0 && numB.length >= 7;
+    btn.className = 'btn-main ' + (ready ? 'btn-active' : 'btn-inactive');
+    btn.textContent = ready ? 'ARM' : 'ENTER BOTH PEOPLE';
+  }
+
+  document.getElementById('input-name-a').addEventListener('input', checkReady);
+  document.getElementById('input-num-a').addEventListener('input', checkReady);
+  document.getElementById('input-name-b').addEventListener('input', checkReady);
+  document.getElementById('input-num-b').addEventListener('input', checkReady);
 
   function arm() {
-    const nA = document.getElementById('numA').value.trim();
-    const nB = document.getElementById('numB').value.trim();
-    const nameA = document.getElementById('nameA').value.trim();
-    const nameB = document.getElementById('nameB').value.trim();
-    if (!nA || !nB || !nameA || !nameB) return;
-    fired = false;
-    document.getElementById('ghost-names').innerHTML = nameA + ' · ' + nA + '<br>' + nameB + ' · ' + nB;
-    show('screen-armed');
-    vibe([60,40,60]);
+    var nameA = getVal('input-name-a');
+    var numA  = getVal('input-num-a');
+    var nameB = getVal('input-name-b');
+    var numB  = getVal('input-num-b');
+    if (!nameA || numA.length < 7 || !nameB || numB.length < 7) return;
+
+    var urlVal = document.getElementById('url-box').value.trim();
+    if (urlVal) SERVER = urlVal;
+
+    hasFired = false;
+    document.getElementById('ghost-names').innerHTML = nameA + ' · ' + numA + '<br>' + nameB + ' · ' + numB;
+    document.getElementById('armed-sub').textContent = 'anywhere · any finger';
+    document.getElementById('armed-sub').style.color = '#222';
+
+    showScreen('screen-armed');
+    vibe([60, 40, 60]);
+
+    document.getElementById('screen-armed').onclick = fire;
+    document.getElementById('screen-armed').ontouchstart = fire;
   }
 
   function disarm(e) {
     e.stopPropagation();
-    show('screen-setup');
+    showScreen('screen-setup');
   }
 
-  async function fire() {
-    if (fired) return;
-    fired = true;
+  function fire(e) {
+    if (e) { e.preventDefault(); e.stopPropagation(); }
+    if (hasFired) return;
+    hasFired = true;
+
+    var nameA = getVal('input-name-a');
+    var numA  = getVal('input-num-a');
+    var nameB = getVal('input-name-b');
+    var numB  = getVal('input-num-b');
+
+    console.log('FIRING — A:', numA, 'B:', numB);
+
     vibe([180]);
-
-    const nA = document.getElementById('numA').value.trim();
-    const nB = document.getElementById('numB').value.trim();
-    const nameA = document.getElementById('nameA').value.trim();
-    const nameB = document.getElementById('nameB').value.trim();
-
     document.getElementById('firing-sub').textContent = nameA + ' ← → ' + nameB;
-    show('screen-firing');
+    showScreen('screen-firing');
 
-    try {
-      const res = await fetch(BACKEND() + '/bridge', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ numberA: nA, numberB: nB })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed');
-
+    fetch(SERVER + '/bridge', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ numberA: numA, numberB: numB })
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      if (data.error) throw new Error(data.error);
       callSids = { callASid: data.callASid, callBSid: data.callBSid };
       document.getElementById('live-names').innerHTML =
         '<span style="color:#383838">' + nameA + '</span><br>' +
         '<span style="color:#1e1e1e;font-size:10px">⟷ connected ⟷</span><br>' +
         '<span style="color:#383838">' + nameB + '</span>';
-      show('screen-live');
-      vibe([50,30,50,30,50]);
-
-    } catch(err) {
-      fired = false;
-      document.getElementById('armed-sub').textContent = 'RETRY';
+      showScreen('screen-live');
+      vibe([50, 30, 50, 30, 50]);
+    })
+    .catch(function(err) {
+      console.log('ERROR:', err.message);
+      hasFired = false;
+      document.getElementById('armed-sub').textContent = 'RETRY — ' + err.message;
       document.getElementById('armed-sub').style.color = '#ff3b30';
-      show('screen-armed');
+      showScreen('screen-armed');
       vibe([400]);
-      setTimeout(() => {
+      setTimeout(function() {
         document.getElementById('armed-sub').textContent = 'anywhere · any finger';
         document.getElementById('armed-sub').style.color = '#222';
-      }, 2000);
-    }
+      }, 3000);
+    });
   }
 
-  async function reset() {
+  function resetApp() {
     if (callSids) {
-      try {
-        await fetch(BACKEND() + '/end', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(callSids)
-        });
-      } catch(e) {}
+      fetch(SERVER + '/end', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(callSids)
+      }).catch(function(){});
     }
     callSids = null;
-    fired = false;
-    document.getElementById('nameA').value = '';
-    document.getElementById('nameB').value = '';
-    document.getElementById('numA').value = '';
-    document.getElementById('numB').value = '';
-    show('screen-setup');
+    hasFired = false;
+    document.getElementById('input-name-a').value = '';
+    document.getElementById('input-num-a').value = '';
+    document.getElementById('input-name-b').value = '';
+    document.getElementById('input-num-b').value = '';
+    checkReady();
+    showScreen('screen-setup');
   }
-
-  // Update arm button state as user types
-  ['nameA','nameB','numA','numB'].forEach(id => {
-    document.getElementById(id).addEventListener('input', () => {
-      const nA = document.getElementById('numA').value.trim();
-      const nB = document.getElementById('numB').value.trim();
-      const nameA = document.getElementById('nameA').value.trim();
-      const nameB = document.getElementById('nameB').value.trim();
-      const btn = document.getElementById('arm-btn');
-      const ready = nA.length >= 7 && nB.length >= 7 && nameA && nameB;
-      btn.className = 'btn-main ' + (ready ? 'active' : 'inactive');
-      btn.textContent = ready ? 'ARM' : 'ENTER BOTH PEOPLE';
-    });
-  });
 </script>
 </body>
 </html>
