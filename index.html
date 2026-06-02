@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { height: 100%; background: #0a0a0a; overflow: hidden; }
+  html, body { height: 100%; background: #0a0a0a; }
 
   @keyframes breathe {
     0%,100% { opacity: 0.05; transform: scale(1); }
@@ -31,56 +31,93 @@
     0% { opacity: 0; letter-spacing: 0.4em; }
     100% { opacity: 1; letter-spacing: 0.06em; }
   }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
 
   .page {
     min-height: 100vh; background: #0a0a0a;
     display: flex; flex-direction: column;
     padding: 48px 24px 36px;
+    overflow-y: auto;
   }
   .hidden { display: none !important; }
   .page-title {
     font-family: 'Bebas Neue', sans-serif;
     font-size: 40px; color: #fff;
     letter-spacing: 0.04em; line-height: 1;
-    margin-bottom: 28px;
+    margin-bottom: 6px;
+  }
+  .page-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; color: #333;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    margin-bottom: 24px;
   }
   .red { color: #ff3b30; }
-  .label {
-    font-family: 'DM Mono', monospace;
-    font-size: 9px; color: #333;
-    letter-spacing: 0.22em; text-transform: uppercase;
-    margin-bottom: 10px; display: block;
-  }
-  .card {
+
+  /* Number list */
+  .num-item {
+    display: flex; align-items: center;
     background: #0f0f0f; border: 1px solid #1a1a1a;
-    border-radius: 14px; padding: 20px; margin-bottom: 12px;
+    border-radius: 12px; padding: 14px 16px;
+    margin-bottom: 8px;
+    animation: slideIn 0.2s ease both;
   }
-  .card-label {
+  .num-index {
     font-family: 'DM Mono', monospace;
     font-size: 9px; color: #ff3b30;
-    letter-spacing: 0.22em; text-transform: uppercase;
-    margin-bottom: 14px; display: block;
+    letter-spacing: 0.1em; margin-right: 10px;
+    flex-shrink: 0; width: 20px;
   }
-  .input-row {
-    display: flex; align-items: center;
-    border-bottom: 1px solid #1e1e1e;
-    padding-bottom: 8px;
-  }
-  .prefix {
+  .num-prefix {
     font-family: 'DM Mono', monospace;
-    font-size: 22px; color: #ff3b30;
-    letter-spacing: 0.05em;
-    flex-shrink: 0; padding-right: 4px;
+    font-size: 18px; color: #ff3b30;
+    flex-shrink: 0; margin-right: 2px;
   }
-  input[type=tel] {
-    background: transparent; border: none;
-    outline: none; color: #fff;
-    font-family: 'DM Mono', monospace;
-    font-size: 22px; width: 100%;
-    letter-spacing: 0.05em; padding: 8px 0;
+  .num-input {
+    background: transparent; border: none; outline: none;
+    color: #fff; font-family: 'DM Mono', monospace;
+    font-size: 18px; flex: 1; letter-spacing: 0.05em;
+    -webkit-tap-highlight-color: transparent;
+    min-width: 0;
+  }
+  .num-input::placeholder { color: #252525; }
+  .num-delete {
+    background: none; border: none;
+    color: #2a2a2a; font-size: 16px;
+    cursor: pointer; padding: 6px;
+    flex-shrink: 0;
     -webkit-tap-highlight-color: transparent;
   }
-  input::placeholder { color: #252525; }
+  .num-delete:active { color: #ff3b30; }
+
+  /* Add button */
+  .btn-add {
+    width: 100%; padding: 16px;
+    border-radius: 12px;
+    border: 1px dashed #222;
+    background: transparent;
+    color: #333;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; letter-spacing: 0.2em;
+    text-transform: uppercase; cursor: pointer;
+    margin-bottom: 12px;
+    -webkit-tap-highlight-color: transparent;
+    transition: all 0.2s;
+  }
+  .btn-add:active { border-color: #ff3b30; color: #ff3b30; }
+
+  /* Count badge */
+  .count-badge {
+    text-align: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; color: #2a2a2a;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .count-badge span { color: #ff3b30; }
 
   .btn-main {
     width: 100%; padding: 20px;
@@ -89,7 +126,7 @@
     font-size: 22px; letter-spacing: 0.12em;
     cursor: pointer; transition: all 0.2s;
     -webkit-tap-highlight-color: transparent;
-    display: block;
+    display: block; margin-top: 8px;
   }
   .btn-active {
     border: 1px solid rgba(255,59,48,0.5);
@@ -101,6 +138,24 @@
     cursor: not-allowed;
   }
 
+  #url-toggle {
+    background: none; border: none;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px; color: #1e1e1e;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    cursor: pointer; padding: 8px 0; display: block;
+    margin-top: 8px;
+  }
+  #url-box {
+    width: 100%; background: #111;
+    border: 1px solid #1e1e1e; border-radius: 8px;
+    padding: 11px 12px; color: #555;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px; outline: none; margin-bottom: 8px;
+    display: none;
+  }
+
+  /* ARMED */
   #screen-armed {
     position: fixed; inset: 0;
     display: flex; flex-direction: column;
@@ -130,19 +185,16 @@
     font-size: 96px; color: #fff;
     letter-spacing: 0.06em; line-height: 1; z-index: 2;
   }
+  #armed-count {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; color: #ff3b30;
+    letter-spacing: 0.2em; z-index: 2; margin-top: 10px;
+  }
   #armed-sub {
     font-family: 'DM Mono', monospace;
     font-size: 10px; color: #222;
     letter-spacing: 0.22em; text-transform: uppercase;
-    z-index: 2; margin-top: 14px;
-  }
-  #ghost-names {
-    position: absolute; bottom: 36px;
-    left: 0; right: 0; text-align: center;
-    font-family: 'DM Mono', monospace;
-    font-size: 11px; color: #1a1a1a;
-    letter-spacing: 0.1em; line-height: 2.5;
-    pointer-events: none;
+    z-index: 2; margin-top: 6px;
   }
   #disarm-btn {
     position: absolute; top: 20px; right: 20px;
@@ -152,6 +204,8 @@
     cursor: pointer; padding: 12px;
     -webkit-tap-highlight-color: transparent;
   }
+
+  /* FIRING */
   #screen-firing {
     position: fixed; inset: 0;
     display: flex; flex-direction: column;
@@ -172,6 +226,8 @@
     font-family: 'DM Mono', monospace;
     font-size: 10px; color: #282828; letter-spacing: 0.2em;
   }
+
+  /* LIVE */
   #screen-live {
     position: fixed; inset: 0;
     display: flex; flex-direction: column;
@@ -188,10 +244,10 @@
     font-size: 72px; color: #fff;
     letter-spacing: 0.06em; animation: liveIn 0.5s ease both;
   }
-  #live-numbers {
+  #live-count {
     font-family: 'DM Mono', monospace;
-    font-size: 12px; color: #2e2e2e;
-    letter-spacing: 0.08em; text-align: center; line-height: 2.6;
+    font-size: 13px; color: #383838;
+    letter-spacing: 0.1em; text-align: center;
   }
   #end-btn {
     margin-top: 52px; background: none;
@@ -202,21 +258,6 @@
     text-transform: uppercase; cursor: pointer;
     -webkit-tap-highlight-color: transparent;
   }
-  #url-toggle {
-    background: none; border: none;
-    font-family: 'DM Mono', monospace;
-    font-size: 9px; color: #1e1e1e;
-    letter-spacing: 0.15em; text-transform: uppercase;
-    cursor: pointer; padding: 8px 0; display: block;
-  }
-  #url-box {
-    width: 100%; background: #111;
-    border: 1px solid #1e1e1e; border-radius: 8px;
-    padding: 11px 12px; color: #555;
-    font-family: 'DM Mono', monospace;
-    font-size: 12px; outline: none; margin-bottom: 14px;
-    display: none;
-  }
 </style>
 </head>
 <body>
@@ -224,30 +265,18 @@
 <!-- SETUP -->
 <div id="screen-setup" class="page">
   <div class="page-title">Setup<br><span class="red">Bridge</span></div>
+  <div class="page-sub" id="setup-sub">Add spectator numbers</div>
 
-  <div class="card">
-    <span class="card-label">PERSON A</span>
-    <span class="label">Phone Number</span>
-    <div class="input-row">
-      <span class="prefix">+965</span>
-      <input type="tel" id="input-num-a" placeholder="XXXX XXXX" autocomplete="off" maxlength="8">
-    </div>
-  </div>
+  <div id="numbers-list"></div>
 
-  <div class="card">
-    <span class="card-label">PERSON B</span>
-    <span class="label">Phone Number</span>
-    <div class="input-row">
-      <span class="prefix">+965</span>
-      <input type="tel" id="input-num-b" placeholder="XXXX XXXX" autocomplete="off" maxlength="8">
-    </div>
-  </div>
+  <button class="btn-add" onclick="addNumber()">+ ADD NUMBER</button>
+
+  <div class="count-badge" id="count-badge">0 numbers added</div>
 
   <button id="url-toggle" onclick="toggleUrl()">▼ server url</button>
   <input type="url" id="url-box" value="https://bridge-server-production-a25d.up.railway.app">
 
-  <div style="flex:1"></div>
-  <button class="btn-main btn-inactive" id="arm-btn" onclick="arm()">ENTER BOTH NUMBERS</button>
+  <button class="btn-main btn-inactive" id="arm-btn" onclick="arm()">ADD AT LEAST 2 NUMBERS</button>
 </div>
 
 <!-- ARMED -->
@@ -257,8 +286,8 @@
   <div class="ring" id="ring2"></div>
   <div id="center-dot"></div>
   <div id="tap-word">TAP</div>
+  <div id="armed-count"></div>
   <div id="armed-sub">anywhere · any finger</div>
-  <div id="ghost-names"></div>
   <button id="disarm-btn" onclick="disarm(event)">✕</button>
 </div>
 
@@ -273,23 +302,17 @@
 <div id="screen-live" class="hidden">
   <div id="live-dot"></div>
   <div id="live-text">LIVE</div>
-  <div id="live-numbers"></div>
+  <div id="live-count"></div>
   <button id="end-btn" onclick="resetApp()">end + reset</button>
 </div>
 
 <script>
   var SERVER = 'https://bridge-server-production-a25d.up.railway.app';
-  var callSids = null;
+  var numbers = [];
+  var callSids = [];
   var hasFired = false;
   var urlOpen = false;
-
-  function getVal(id) {
-    return document.getElementById(id).value.trim();
-  }
-
-  function fullNumber(id) {
-    return '+965' + getVal(id);
-  }
+  var inputCount = 0;
 
   function showScreen(name) {
     var screens = ['screen-setup','screen-armed','screen-firing','screen-live'];
@@ -313,28 +336,65 @@
     try { if (navigator.vibrate) navigator.vibrate(p); } catch(e) {}
   }
 
-  function checkReady() {
-    var numA = getVal('input-num-a');
-    var numB = getVal('input-num-b');
-    var btn  = document.getElementById('arm-btn');
-    var ready = numA.length >= 7 && numB.length >= 7;
+  function updateCount() {
+    var filled = getFilledNumbers().length;
+    var badge = document.getElementById('count-badge');
+    var btn = document.getElementById('arm-btn');
+    badge.innerHTML = '<span>' + filled + '</span> number' + (filled !== 1 ? 's' : '') + ' ready';
+    var ready = filled >= 2;
     btn.className = 'btn-main ' + (ready ? 'btn-active' : 'btn-inactive');
-    btn.textContent = ready ? 'ARM' : 'ENTER BOTH NUMBERS';
+    btn.textContent = ready ? 'ARM — ' + filled + ' PHONES' : 'ADD AT LEAST 2 NUMBERS';
   }
 
-  document.getElementById('input-num-a').addEventListener('input', checkReady);
-  document.getElementById('input-num-b').addEventListener('input', checkReady);
+  function getFilledNumbers() {
+    var result = [];
+    var inputs = document.querySelectorAll('.num-input');
+    for (var i = 0; i < inputs.length; i++) {
+      var val = inputs[i].value.trim();
+      if (val.length >= 7) result.push('+965' + val);
+    }
+    return result;
+  }
+
+  function addNumber() {
+    inputCount++;
+    var idx = inputCount;
+    var list = document.getElementById('numbers-list');
+    var div = document.createElement('div');
+    div.className = 'num-item';
+    div.id = 'num-item-' + idx;
+    div.innerHTML =
+      '<span class="num-index">' + String(list.children.length + 1).padStart(2,'0') + '</span>' +
+      '<span class="num-prefix">+965</span>' +
+      '<input type="tel" class="num-input" placeholder="XXXX XXXX" maxlength="8" autocomplete="off" oninput="updateCount()">' +
+      '<button class="num-delete" onclick="deleteNumber(' + idx + ')">✕</button>';
+    list.appendChild(div);
+    div.querySelector('input').focus();
+    updateCount();
+  }
+
+  function deleteNumber(idx) {
+    var el = document.getElementById('num-item-' + idx);
+    if (el) el.remove();
+    // Re-index
+    var items = document.querySelectorAll('.num-item .num-index');
+    for (var i = 0; i < items.length; i++) {
+      items[i].textContent = String(i + 1).padStart(2, '0');
+    }
+    updateCount();
+  }
 
   function arm() {
-    var numA = getVal('input-num-a');
-    var numB = getVal('input-num-b');
-    if (numA.length < 7 || numB.length < 7) return;
+    var nums = getFilledNumbers();
+    if (nums.length < 2) return;
 
     var urlVal = document.getElementById('url-box').value.trim();
     if (urlVal) SERVER = urlVal;
 
     hasFired = false;
-    document.getElementById('ghost-names').innerHTML = '+965' + numA + '<br>+965' + numB;
+    callSids = [];
+
+    document.getElementById('armed-count').textContent = nums.length + ' phones armed';
     document.getElementById('armed-sub').textContent = 'anywhere · any finger';
     document.getElementById('armed-sub').style.color = '#222';
 
@@ -355,26 +415,22 @@
     if (hasFired) return;
     hasFired = true;
 
-    var numA = fullNumber('input-num-a');
-    var numB = fullNumber('input-num-b');
-
+    var nums = getFilledNumbers();
     vibe([180]);
-    document.getElementById('firing-sub').textContent = numA + ' · ' + numB;
+    document.getElementById('firing-sub').textContent = 'calling ' + nums.length + ' phones…';
     showScreen('screen-firing');
 
-    fetch(SERVER + '/bridge', {
+    fetch(SERVER + '/bridge-all', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ numberA: numA, numberB: numB })
+      body: JSON.stringify({ numbers: nums })
     })
     .then(function(res) { return res.json(); })
     .then(function(data) {
       if (data.error) throw new Error(data.error);
-      callSids = { callASid: data.callASid, callBSid: data.callBSid };
-      document.getElementById('live-numbers').innerHTML =
-        '<span style="color:#383838">' + numA + '</span><br>' +
-        '<span style="color:#1e1e1e;font-size:10px">⟷ connected ⟷</span><br>' +
-        '<span style="color:#383838">' + numB + '</span>';
+      callSids = data.callSids || [];
+      document.getElementById('live-count').innerHTML =
+        '<span style="color:#ff3b30">' + nums.length + '</span> phones connected';
       showScreen('screen-live');
       vibe([50,30,50,30,50]);
     })
@@ -392,20 +448,24 @@
   }
 
   function resetApp() {
-    if (callSids) {
-      fetch(SERVER + '/end', {
+    if (callSids.length > 0) {
+      fetch(SERVER + '/end-all', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(callSids)
+        body: JSON.stringify({ callSids: callSids })
       }).catch(function(){});
     }
-    callSids = null;
+    callSids = [];
     hasFired = false;
-    document.getElementById('input-num-a').value = '';
-    document.getElementById('input-num-b').value = '';
-    checkReady();
+    document.getElementById('numbers-list').innerHTML = '';
+    inputCount = 0;
+    updateCount();
     showScreen('screen-setup');
   }
+
+  // Start with 2 inputs ready
+  addNumber();
+  addNumber();
 </script>
 </body>
 </html>
