@@ -1,7 +1,6 @@
 const express = require("express");
 const cors    = require("cors");
 const twilio  = require("twilio");
-require("dotenv").config();
 
 const app = express();
 app.use(cors());
@@ -30,6 +29,7 @@ app.post("/bridge", async (req, res) => {
   const roomName = "show_" + Date.now();
   const from = process.env.TWILIO_FROM_NUMBER1;
 
+  console.log("TWILIO KEYS:", Object.keys(process.env).filter(k => k.startsWith('TWILIO')));
   console.log("From:", from);
   console.log("Calling A:", numberA);
   console.log("Calling B:", numberB);
@@ -71,6 +71,7 @@ app.post("/bridge-all", async (req, res) => {
   const roomName = "show_" + Date.now();
   const from = process.env.TWILIO_FROM_NUMBER1;
 
+  console.log("TWILIO KEYS:", Object.keys(process.env).filter(k => k.startsWith('TWILIO')));
   console.log("Room:", roomName);
   console.log("From:", from);
   console.log("Calling", numbers.length, "numbers:", numbers);
