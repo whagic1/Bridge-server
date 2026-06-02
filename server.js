@@ -1,46 +1,22 @@
-/**
- * CALL BRIDGE SERVER v2
- * ─────────────────────────────────────────────────────────────────
- * The effect:
- *   - Wife's phone rings → shows HUSBAND'S number (his name pops up)
- *   - Husband's phone rings → shows WIFE'S number (her name pops up)
- *
- * How it works legally:
- *   - Twilio Verified Caller ID lets you call FROM a number you've
- *     verified. Verify both spectator numbers before the show.
- *   - Call Wife using Husband's verified number as callerId
- *   - Call Husband using Wife's verified number as callerId
- *   - Both calls drop into the same conference → they talk to each other
- *
- * Endpoints:
- *   GET  /                        health check
- *   POST /verify/start            start verification for a number
- *   GET  /verify/list             list all verified numbers
- *   POST /bridge                  fire the bridge (both phones ring)
- *   POST /end                     hang up both calls
- * ─────────────────────────────────────────────────────────────────
- */
-
 const express = require("express");
 const cors    = require("cors");
 const twilio  = require("twilio");
 require("dotenv").config();
 
-const app    = express();
+const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(express.static(__dirname));
 
 const client = twilio(
   process.env.TWILIO_ACCOUNT_SID,
   process.env.TWILIO_AUTH_TOKEN
 );
 
-// ── Health ────────────────────────────────────────────────────────
-app.get("/", (req, res) => {
+app.get("/health", (req, res) => {
   res.json({ status: "ok", message: "Bridge server running" });
 });
 
-// ── BRIDGE — the performance trigger ─────────────────────────────
 app.post("/bridge", async (req, res) => {
   const { numberA, numberB } = req.body;
 
@@ -77,10 +53,7 @@ app.post("/bridge", async (req, res) => {
       }),
     ]);
 
-    console.log(`\n🎭 BRIDGE FIRED`);
-    console.log(`   Room: ${roomName}`);
-    console.log(`   A: ${callA.sid} → ${numberA}`);
-    console.log(`   B: ${callB.sid} → ${numberB}\n`);
+    console.log(`🎭 BRIDGE FIRED — Room: ${roomName}`);
 
     res.json({
       success:  true,
@@ -90,12 +63,11 @@ app.post("/bridge", async (req, res) => {
     });
 
   } catch (err) {
-    console.error("[BRIDGE ERROR]", err.message);
+    console.error("[ERROR]", err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
-// ── End calls ─────────────────────────────────────────────────────
 app.post("/end", async (req, res) => {
   const { callASid, callBSid } = req.body;
   try {
@@ -111,5 +83,5 @@ app.post("/end", async (req, res) => {
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-  console.log(`\n🎭 Bridge server live on http://localhost:${PORT}\n`);
+  console.log(`🎭 Bridge server live on port ${PORT}`);
 });
