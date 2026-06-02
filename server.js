@@ -35,8 +35,15 @@ app.post("/bridge", async (req, res) => {
   console.log("Calling A:", numberA);
   console.log("Calling B:", numberB);
 
-  // timeLimit="7" = 7 seconds after both answer then auto-disconnect
-  const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+  // startConferenceOnEnter=false for A means timer only starts when BOTH are in
+  const twimlA = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Dial>
+    <Conference beep="false" startConferenceOnEnter="false" endConferenceOnExit="true" waitUrl="" waitMethod="GET" timeLimit="7">${roomName}</Conference>
+  </Dial>
+</Response>`;
+
+  const twimlB = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Dial>
     <Conference beep="false" startConferenceOnEnter="true" endConferenceOnExit="true" waitUrl="" waitMethod="GET" timeLimit="7">${roomName}</Conference>
@@ -44,18 +51,21 @@ app.post("/bridge", async (req, res) => {
 </Response>`;
 
   try {
-    const callA = await client.calls.create({
-      to:    numberA,
-      from:  from,
-      twiml: twiml,
-    });
-    console.log("Call A SID:", callA.sid);
+    // Fire both calls simultaneously
+    const [callA, callB] = await Promise.all([
+      client.calls.create({
+        to:    numberA,
+        from:  from,
+        twiml: twimlA,
+      }),
+      client.calls.create({
+        to:    numberB,
+        from:  from,
+        twiml: twimlB,
+      }),
+    ]);
 
-    const callB = await client.calls.create({
-      to:    numberB,
-      from:  from,
-      twiml: twiml,
-    });
+    console.log("Call A SID:", callA.sid);
     console.log("Call B SID:", callB.sid);
 
     res.json({
