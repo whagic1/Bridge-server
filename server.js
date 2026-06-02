@@ -18,12 +18,16 @@ app.get("/health", (req, res) => {
 });
 
 app.post("/bridge", async (req, res) => {
-  console.log("BRIDGE REQUEST:", JSON.stringify(req.body));
+  console.log("BRIDGE REQUEST BODY:", JSON.stringify(req.body));
 
   const numberA = req.body.numberA;
   const numberB = req.body.numberB;
 
+  console.log("Number A:", numberA);
+  console.log("Number B:", numberB);
+
   if (!numberA || !numberB) {
+    console.log("MISSING NUMBERS");
     return res.status(400).json({ error: "Both numbers required" });
   }
 
@@ -32,40 +36,29 @@ app.post("/bridge", async (req, res) => {
 
   console.log("Room:", roomName);
   console.log("From:", from);
-  console.log("Calling A:", numberA);
-  console.log("Calling B:", numberB);
 
-  // startConferenceOnEnter=false for A means timer only starts when BOTH are in
-  const twimlA = `<?xml version="1.0" encoding="UTF-8"?>
+  const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Dial>
-    <Conference beep="false" startConferenceOnEnter="false" endConferenceOnExit="true" waitUrl="" waitMethod="GET" timeLimit="7">${roomName}</Conference>
-  </Dial>
-</Response>`;
-
-  const twimlB = `<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-  <Dial>
-    <Conference beep="false" startConferenceOnEnter="true" endConferenceOnExit="true" waitUrl="" waitMethod="GET" timeLimit="7">${roomName}</Conference>
+    <Conference beep="false" startConferenceOnEnter="true" endConferenceOnExit="true" waitUrl="" waitMethod="GET">${roomName}</Conference>
   </Dial>
 </Response>`;
 
   try {
-    // Fire both calls simultaneously
-    const [callA, callB] = await Promise.all([
-      client.calls.create({
-        to:    numberA,
-        from:  from,
-        twiml: twimlA,
-      }),
-      client.calls.create({
-        to:    numberB,
-        from:  from,
-        twiml: twimlB,
-      }),
-    ]);
-
+    console.log("Calling A:", numberA);
+    const callA = await client.calls.create({
+      to:    numberA,
+      from:  from,
+      twiml: twiml,
+    });
     console.log("Call A SID:", callA.sid);
+
+    console.log("Calling B:", numberB);
+    const callB = await client.calls.create({
+      to:    numberB,
+      from:  from,
+      twiml: twiml,
+    });
     console.log("Call B SID:", callB.sid);
 
     res.json({
