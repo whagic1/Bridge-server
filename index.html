@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>Bridge</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: #0a0a0a; overflow: hidden; }
+
+  @keyframes breathe {
+    0%,100% { opacity: 0.05; transform: scale(1); }
+    50% { opacity: 0.13; transform: scale(1.1); }
+  }
+  @keyframes ripple {
+    0% { transform: scale(1); opacity: 0.5; }
+    100% { transform: scale(4); opacity: 0; }
+  }
+  @keyframes ripple2 {
+    0% { transform: scale(1); opacity: 0.3; }
+    100% { transform: scale(3); opacity: 0; }
+  }
+  @keyframes blink {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.15; }
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes flashBg {
+    0% { background: #0a0a0a; }
+    20% { background: #1c0000; }
+    100% { background: #0a0a0a; }
+  }
+  @keyframes liveIn {
+    0% { opacity: 0; letter-spacing: 0.4em; }
+    100% { opacity: 1; letter-spacing: 0.06em; }
+  }
+
+  .page {
+    min-height: 100vh; background: #0a0a0a;
+    display: flex; flex-direction: column;
+    padding: 48px 24px 36px;
+  }
+  .hidden { display: none !important; }
+  .page-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 40px; color: #fff;
+    letter-spacing: 0.04em; line-height: 1;
+    margin-bottom: 28px;
+  }
+  .red { color: #ff3b30; }
+  .label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px; color: #333;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .input-row {
+    border-bottom: 1px solid #181818;
+    padding-bottom: 14px; margin-bottom: 14px;
+  }
+  input {
+    background: transparent; border: none; outline: none;
+    color: #fff; font-family: 'DM Mono', monospace;
+    font-size: 18px; width: 100%;
+    letter-spacing: 0.05em;
+    -webkit-tap-highlight-color: transparent;
+  }
+  input::placeholder { color: #252525; }
+  .card {
+    background: #0f0f0f; border: 1px solid #1a1a1a;
+    border-radius: 14px; padding: 20px; margin-bottom: 12px;
+    animation: fadeUp 0.3s ease both;
+  }
+  .card-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px; color: #ff3b30;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  .btn-main {
+    width: 100%; padding: 20px;
+    border-radius: 14px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px; letter-spacing: 0.12em;
+    cursor: pointer; transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn-main.active {
+    border: 1px solid rgba(255,59,48,0.5);
+    background: rgba(255,59,48,0.07);
+    color: #ff3b30;
+  }
+  .btn-main.inactive {
+    border: 1px solid #181818;
+    background: transparent; color: #282828;
+  }
+  .btn-ghost {
+    width: 100%; padding: 14px;
+    background: none; border: 1px solid #1a1a1a;
+    border-radius: 12px; color: #2a2a2a;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; letter-spacing: 0.2em;
+    text-transform: uppercase; cursor: pointer;
+    margin-top: 10px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    display: inline-block; margin-left: 8px;
+    vertical-align: middle;
+  }
+  .dot-red { background: #ff3b30; box-shadow: 0 0 8px rgba(255,59,48,0.7); }
+  .dot-green { background: #34c759; box-shadow: 0 0 8px rgba(52,199,89,0.7); }
+
+  /* ARMED SCREEN */
+  #screen-armed {
+    position: fixed; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: #0a0a0a;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+  #glow {
+    position: absolute;
+    width: 300px; height: 300px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,59,48,1) 0%, transparent 70%);
+    animation: breathe 2.6s ease-in-out infinite;
+    pointer-events: none;
+  }
+  .ring {
+    position: absolute;
+    width: 150px; height: 150px; border-radius: 50%;
+    pointer-events: none;
+  }
+  #ring1 { border: 1px solid rgba(255,59,48,0.4); animation: ripple 1.7s ease-out infinite; }
+  #ring2 { border: 1px solid rgba(255,59,48,0.2); animation: ripple2 1.7s ease-out 0.6s infinite; }
+  #center-dot {
+    width: 12px; height: 12px; border-radius: 50%;
+    background: #ff3b30;
+    box-shadow: 0 0 24px rgba(255,59,48,0.9);
+    z-index: 2; margin-bottom: 24px;
+  }
+  #tap-word {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 96px; color: #fff;
+    letter-spacing: 0.06em; line-height: 1;
+    z-index: 2; transition: transform 0.08s ease;
+  }
+  #armed-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; color: #222;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    z-index: 2; margin-top: 14px;
+  }
+  #ghost-names {
+    position: absolute;
+    bottom: 36px; left: 0; right: 0; text-align: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; color: #181818;
+    letter-spacing: 0.1em; line-height: 2.5;
+    pointer-events: none;
+  }
+  #disarm-btn {
+    position: absolute;
+    top: 20px; right: 20px;
+    background: none; border: none;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px; color: #1c1c1c;
+    letter-spacing: 0.15em; cursor: pointer;
+    padding: 12px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* FIRING SCREEN */
+  #screen-firing {
+    position: fixed; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: #0a0a0a; gap: 14px;
+  }
+  #firing-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: #ff3b30;
+    animation: blink 0.7s infinite;
+    box-shadow: 0 0 16px rgba(255,59,48,0.8);
+  }
+  #firing-text {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 56px; color: #ff3b30;
+    letter-spacing: 0.08em;
+    animation: blink 1s infinite;
+  }
+  #firing-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; color: #282828;
+    letter-spacing: 0.2em;
+  }
+
+  /* LIVE SCREEN */
+  #screen-live {
+    position: fixed; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: #0a0a0a; gap: 10px; padding: 32px;
+  }
+  #live-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: #ff3b30;
+    box-shadow: 0 0 22px rgba(255,59,48,0.9);
+    animation: blink 1.4s ease-in-out infinite;
+    margin-bottom: 6px;
+  }
+  #live-text {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 72px; color: #fff;
+    letter-spacing: 0.06em;
+    animation: liveIn 0.5s ease both;
+  }
+  #live-names {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px; color: #2e2e2e;
+    letter-spacing: 0.08em; text-align: center;
+    line-height: 2.6;
+    animation: fadeUp 0.5s 0.2s ease both;
+  }
+  #end-btn {
+    margin-top: 52px;
+    background: none; border: 1px solid #1a1a1a;
+    border-radius: 12px; padding: 16px 40px;
+    color: #282828; font-family: 'DM Mono', monospace;
+    font-size: 10px; letter-spacing: 0.2em;
+    text-transform: uppercase; cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* URL config */
+  #url-toggle {
+    background: none; border: none;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px; color: #222;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    cursor: pointer; padding: 8px 0; display: block;
+    margin-bottom: 6px;
+  }
+  #url-input {
+    width: 100%; background: #111;
+    border: 1px solid #1e1e1e; border-radius: 8px;
+    padding: 11px 12px; color: #555;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px; outline: none;
+    margin-bottom: 14px;
+  }
+</style>
+</head>
+<body>
+
+<!-- SETUP SCREEN -->
+<div id="screen-setup" class="page">
+  <div class="page-title">Setup<br><span class="red">Bridge</span></div>
+
+  <div class="card">
+    <div class="card-label">PERSON A</div>
+    <div class="input-row">
+      <div class="label">Name</div>
+      <input type="text" id="nameA" placeholder="Ahmed" autocomplete="off">
+    </div>
+    <div class="input-row" style="border:none;padding:0;margin:0">
+      <div class="label">Phone Number</div>
+      <input type="tel" id="numA" placeholder="+965 XXXX XXXX" autocomplete="off">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-label">PERSON B</div>
+    <div class="input-row">
+      <div class="label">Name</div>
+      <input type="text" id="nameB" placeholder="Sara" autocomplete="off">
+    </div>
+    <div class="input-row" style="border:none;padding:0;margin:0">
+      <div class="label">Phone Number</div>
+      <input type="tel" id="numB" placeholder="+965 XXXX XXXX" autocomplete="off">
+    </div>
+  </div>
+
+  <button id="url-toggle" onclick="toggleUrl()">▼ server url</button>
+  <input type="url" id="url-input" class="hidden"
+    value="https://bridge-server-production-a25d.up.railway.app"
+    placeholder="https://your-server.up.railway.app">
+
+  <div style="flex:1"></div>
+
+  <button class="btn-main inactive" id="arm-btn" onclick="arm()">ENTER BOTH PEOPLE</button>
+</div>
+
+<!-- ARMED SCREEN -->
+<div id="screen-armed" class="hidden" onclick="fire()" ontouchstart="fire()">
+  <div id="glow"></div>
+  <div class="ring" id="ring1"></div>
+  <div class="ring" id="ring2"></div>
+  <div id="center-dot"></div>
+  <div id="tap-word">TAP</div>
+  <div id="armed-sub">anywhere · any finger</div>
+  <div id="ghost-names"></div>
+  <button id="disarm-btn" onclick="disarm(event)">✕</button>
+</div>
+
+<!-- FIRING SCREEN -->
+<div id="screen-firing" class="hidden">
+  <div id="firing-dot"></div>
+  <div id="firing-text">RINGING</div>
+  <div id="firing-sub" id="firing-names"></div>
+</div>
+
+<!-- LIVE SCREEN -->
+<div id="screen-live" class="hidden">
+  <div id="live-dot"></div>
+  <div id="live-text">LIVE</div>
+  <div id="live-names"></div>
+  <button id="end-btn" onclick="reset()">end + reset</button>
+</div>
+
+<script>
+  const BACKEND = () => document.getElementById('url-input').value || 'https://bridge-server-production-a25d.up.railway.app';
+
+  let callSids = null;
+  let fired = false;
+  let urlVisible = false;
+
+  function show(id) {
+    ['screen-setup','screen-armed','screen-firing','screen-live'].forEach(s => {
+      document.getElementById(s).classList.toggle('hidden', s !== id);
+    });
+  }
+
+  function toggleUrl() {
+    urlVisible = !urlVisible;
+    document.getElementById('url-input').classList.toggle('hidden', !urlVisible);
+    document.getElementById('url-toggle').textContent = urlVisible ? '▲ server url' : '▼ server url';
+  }
+
+  function vibe(p) { try { navigator.vibrate && navigator.vibrate(p); } catch(e){} }
+
+  function arm() {
+    const nA = document.getElementById('numA').value.trim();
+    const nB = document.getElementById('numB').value.trim();
+    const nameA = document.getElementById('nameA').value.trim();
+    const nameB = document.getElementById('nameB').value.trim();
+    if (!nA || !nB || !nameA || !nameB) return;
+    fired = false;
+    document.getElementById('ghost-names').innerHTML = nameA + ' · ' + nA + '<br>' + nameB + ' · ' + nB;
+    show('screen-armed');
+    vibe([60,40,60]);
+  }
+
+  function disarm(e) {
+    e.stopPropagation();
+    show('screen-setup');
+  }
+
+  async function fire() {
+    if (fired) return;
+    fired = true;
+    vibe([180]);
+
+    const nA = document.getElementById('numA').value.trim();
+    const nB = document.getElementById('numB').value.trim();
+    const nameA = document.getElementById('nameA').value.trim();
+    const nameB = document.getElementById('nameB').value.trim();
+
+    document.getElementById('firing-sub').textContent = nameA + ' ← → ' + nameB;
+    show('screen-firing');
+
+    try {
+      const res = await fetch(BACKEND() + '/bridge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ numberA: nA, numberB: nB })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed');
+
+      callSids = { callASid: data.callASid, callBSid: data.callBSid };
+      document.getElementById('live-names').innerHTML =
+        '<span style="color:#383838">' + nameA + '</span><br>' +
+        '<span style="color:#1e1e1e;font-size:10px">⟷ connected ⟷</span><br>' +
+        '<span style="color:#383838">' + nameB + '</span>';
+      show('screen-live');
+      vibe([50,30,50,30,50]);
+
+    } catch(err) {
+      fired = false;
+      document.getElementById('armed-sub').textContent = 'RETRY';
+      document.getElementById('armed-sub').style.color = '#ff3b30';
+      show('screen-armed');
+      vibe([400]);
+      setTimeout(() => {
+        document.getElementById('armed-sub').textContent = 'anywhere · any finger';
+        document.getElementById('armed-sub').style.color = '#222';
+      }, 2000);
+    }
+  }
+
+  async function reset() {
+    if (callSids) {
+      try {
+        await fetch(BACKEND() + '/end', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(callSids)
+        });
+      } catch(e) {}
+    }
+    callSids = null;
+    fired = false;
+    document.getElementById('nameA').value = '';
+    document.getElementById('nameB').value = '';
+    document.getElementById('numA').value = '';
+    document.getElementById('numB').value = '';
+    show('screen-setup');
+  }
+
+  // Update arm button state as user types
+  ['nameA','nameB','numA','numB'].forEach(id => {
+    document.getElementById(id).addEventListener('input', () => {
+      const nA = document.getElementById('numA').value.trim();
+      const nB = document.getElementById('numB').value.trim();
+      const nameA = document.getElementById('nameA').value.trim();
+      const nameB = document.getElementById('nameB').value.trim();
+      const btn = document.getElementById('arm-btn');
+      const ready = nA.length >= 7 && nB.length >= 7 && nameA && nameB;
+      btn.className = 'btn-main ' + (ready ? 'active' : 'inactive');
+      btn.textContent = ready ? 'ARM' : 'ENTER BOTH PEOPLE';
+    });
+  });
+</script>
+</body>
+</html>
