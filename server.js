@@ -31,6 +31,8 @@ app.post("/bridge", async (req, res) => {
   const from = process.env.TWILIO_FROM_NUMBER1;
 
   console.log("From:", from);
+  console.log("Calling A:", numberA);
+  console.log("Calling B:", numberB);
 
   const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
@@ -46,8 +48,8 @@ app.post("/bridge", async (req, res) => {
     console.log("Call B SID:", callB.sid);
 
     res.json({
-      success: true,
-      room: roomName,
+      success:  true,
+      room:     roomName,
       callASid: callA.sid,
       callBSid: callB.sid,
     });
