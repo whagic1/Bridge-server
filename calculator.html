@@ -16,15 +16,33 @@
     overflow: hidden;
     user-select: none;
   }
-  #camera-feed {
-    position: fixed; top: -9999px; left: -9999px;
-    width: 640px; height: 480px;
-    opacity: 0; pointer-events: none;
+
+  /* DEBUG PANEL - tap display 3 times to toggle */
+  #debug-panel {
+    position: fixed; inset: 0; background: #000;
+    z-index: 999; display: none;
+    flex-direction: column; padding: 20px; gap: 10px;
+    overflow-y: auto;
   }
-  #ocr-canvas {
-    position: fixed; top: -9999px; left: -9999px;
-    pointer-events: none;
+  #debug-panel.visible { display: flex; }
+  #debug-video {
+    width: 100%; border: 1px solid #333; border-radius: 8px;
   }
+  #debug-canvas {
+    width: 100%; border: 1px solid #ff9f0a; border-radius: 8px;
+  }
+  #debug-text {
+    font-family: monospace; font-size: 12px;
+    color: #0f0; background: #111;
+    padding: 10px; border-radius: 8px;
+    min-height: 60px; word-break: break-all;
+  }
+  #debug-close {
+    background: #ff3b30; color: #fff; border: none;
+    border-radius: 10px; padding: 12px;
+    font-size: 16px; cursor: pointer;
+  }
+
   .calculator {
     width: 100%; height: 100vh;
     background: #000;
@@ -55,15 +73,13 @@
   .buttons {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-    padding: 12px 16px 20px;
+    gap: 12px; padding: 12px 16px 20px;
   }
   .btn {
     aspect-ratio: 1; border-radius: 50%; border: none;
     font-size: 32px; font-weight: 400; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     transition: filter 0.08s ease;
-    -webkit-tap-highlight-color: transparent;
   }
   .btn:active { filter: brightness(0.75); }
   .btn-func { background: #a5a5a5; color: #000; font-size: 28px; }
@@ -73,12 +89,12 @@
   .btn-zero {
     grid-column: span 2; border-radius: 44px; aspect-ratio: unset;
     height: calc((100vw - 32px - 36px) / 4);
-    justify-content: flex-start; padding-left: 36px; font-size: 32px;
+    justify-content: flex-start; padding-left: 36px;
   }
   #ocr-status {
     position: fixed; top: 12px; left: 16px;
     width: 6px; height: 6px; border-radius: 50%;
-    background: transparent; z-index: 100; transition: background 0.3s;
+    background: transparent; z-index: 100;
   }
   #ocr-status.scanning { background: rgba(255,149,0,0.6); }
   #ocr-status.found { background: rgba(52,199,89,0.8); }
@@ -86,12 +102,24 @@
 </head>
 <body>
 
-<video id="camera-feed" autoplay playsinline muted></video>
-<canvas id="ocr-canvas" width="640" height="480"></canvas>
 <div id="ocr-status"></div>
 
+<!-- DEBUG PANEL -->
+<div id="debug-panel">
+  <button id="debug-close" onclick="toggleDebug()">✕ Close Debug</button>
+  <div style="color:#fff;font-size:12px;font-family:monospace" id="debug-log">Initializing...</div>
+  <video id="debug-video" autoplay playsinline muted></video>
+  <canvas id="debug-canvas" width="400" height="200"></canvas>
+  <div id="debug-text">OCR output will appear here</div>
+</div>
+
+<!-- Hidden elements -->
+<video id="camera-feed" style="position:fixed;top:-9999px;left:-9999px;width:640px;height:480px;opacity:0;pointer-events:none;" autoplay playsinline muted></video>
+<canvas id="ocr-canvas" style="position:fixed;top:-9999px;left:-9999px;" width="640" height="480"></canvas>
+
+<!-- Calculator -->
 <div class="calculator">
-  <div class="display">
+  <div class="display" id="display-area">
     <div class="expression" id="expression"></div>
     <div class="main-display" id="main-display">0</div>
   </div>
@@ -119,10 +147,11 @@
 </div>
 
 <script>
+// ── Calculator ────────────────────────────────────────────────────
 var display = '0', expression = '', lastOp = '', firstNum = null, justEquals = false;
-var mainEl = document.getElementById('main-display');
-var exprEl = document.getElementById('expression');
-var acBtn  = document.getElementById('ac-btn');
+var mainEl  = document.getElementById('main-display');
+var exprEl  = document.getElementById('expression');
+var acBtn   = document.getElementById('ac-btn');
 var statusEl = document.getElementById('ocr-status');
 
 function updateDisplay(val) {
@@ -176,84 +205,165 @@ function highlightOp(op) {
     if (op && b.textContent.trim() === op) b.classList.add('active-op');
   });
 }
-
-// SECRET: Force display to their number
 function forceDisplay(number) {
   display = number; expression = ''; lastOp = ''; firstNum = null; justEquals = false;
   updateDisplay(display); exprEl.textContent = ''; acBtn.textContent = 'C';
 }
 
-// OCR Engine
-var video = document.getElementById('camera-feed');
-var canvas = document.getElementById('ocr-canvas');
-var ctx = canvas.getContext('2d');
-var scanning = false, lastDetected = null, scanInterval = null, ocrReady = false, worker = null;
+// ── Debug panel — tap display 3 times to open ─────────────────────
+var tapCount = 0, tapTimer = null;
+document.getElementById('display-area').addEventListener('click', function() {
+  tapCount++;
+  clearTimeout(tapTimer);
+  tapTimer = setTimeout(function() { tapCount = 0; }, 600);
+  if (tapCount >= 3) { tapCount = 0; toggleDebug(); }
+});
+
+function toggleDebug() {
+  var panel = document.getElementById('debug-panel');
+  panel.classList.toggle('visible');
+  if (panel.classList.contains('visible')) {
+    // Mirror camera to debug video
+    var dv = document.getElementById('debug-video');
+    if (video.srcObject) dv.srcObject = video.srcObject;
+  }
+}
+
+function debugLog(msg) {
+  var el = document.getElementById('debug-log');
+  if (el) el.textContent = msg;
+}
+
+// ── OCR Engine ────────────────────────────────────────────────────
+var video      = document.getElementById('camera-feed');
+var canvas     = document.getElementById('ocr-canvas');
+var ctx        = canvas.getContext('2d');
+var ocrReady   = false, worker = null;
+var scanning   = false, lastDetected = null, scanInterval = null;
 
 async function initOCR() {
   try {
+    debugLog('Loading OCR engine...');
     worker = await Tesseract.createWorker('eng', 1, { logger: function() {} });
     await worker.setParameters({
       tessedit_char_whitelist: '0123456789',
       tessedit_pageseg_mode: '7',
     });
     ocrReady = true;
-  } catch(e) { console.log('OCR init error:', e); }
+    debugLog('OCR ready ✓');
+  } catch(e) {
+    debugLog('OCR error: ' + e.message);
+  }
 }
 
 async function startCamera() {
   try {
+    debugLog('Starting back camera...');
     var stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { exact: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+      video: { facingMode: { exact: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
       audio: false
     });
-    video.srcObject = stream; video.play(); startScanning();
+    video.srcObject = stream;
+    await video.play();
+    debugLog('Camera started ✓');
+    startScanning();
   } catch(e) {
+    debugLog('Back camera failed, trying any camera: ' + e.message);
     try {
-      var stream2 = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
-      video.srcObject = stream2; video.play(); startScanning();
-    } catch(e2) { console.log('Camera error:', e2); }
+      var stream2 = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      video.srcObject = stream2;
+      await video.play();
+      debugLog('Camera started (front) ✓');
+      startScanning();
+    } catch(e2) {
+      debugLog('Camera error: ' + e2.message);
+    }
   }
 }
 
 function startScanning() {
   if (scanInterval) clearInterval(scanInterval);
-  scanning = true; statusEl.className = 'scanning';
-  scanInterval = setInterval(captureAndOCR, 800);
+  scanning = true;
+  statusEl.className = 'scanning';
+  scanInterval = setInterval(captureAndOCR, 1000);
 }
 
 async function captureAndOCR() {
-  if (!ocrReady || !scanning || video.readyState < 2) return;
+  if (!ocrReady || !scanning || video.readyState < 2) {
+    debugLog('Not ready: ocr=' + ocrReady + ' scanning=' + scanning + ' video=' + video.readyState);
+    return;
+  }
+
   try {
+    // Draw full frame
     ctx.drawImage(video, 0, 0, 640, 480);
-    var cropCanvas = document.createElement('canvas');
-    cropCanvas.width = 400; cropCanvas.height = 200;
-    var cropCtx = cropCanvas.getContext('2d');
-    cropCtx.drawImage(canvas, 120, 140, 400, 200, 0, 0, 400, 200);
-    var imageData = cropCtx.getImageData(0, 0, 400, 200);
-    var data = imageData.data;
-    for (var i = 0; i < data.length; i += 4) {
-      var avg = (data[i] + data[i+1] + data[i+2]) / 3;
-      var val = avg > 128 ? 255 : 0;
-      data[i] = data[i+1] = data[i+2] = val;
-    }
-    cropCtx.putImageData(imageData, 0, 0);
-    var result = await worker.recognize(cropCanvas);
-    var text = result.data.text.replace(/\s/g,'').replace(/[^0-9]/g,'');
-    var match = text.match(/\d{4}/);
-    if (match) {
-      var detected = match[0];
-      if (detected !== lastDetected) {
-        lastDetected = detected;
-        statusEl.className = 'found';
-        forceDisplay(detected);
-        setTimeout(function() { statusEl.className = 'scanning'; }, 2000);
+
+    // Try multiple crop regions
+    var crops = [
+      { x: 80,  y: 100, w: 480, h: 280 }, // center
+      { x: 0,   y: 0,   w: 640, h: 480 }, // full
+      { x: 160, y: 160, w: 320, h: 160 }, // tight center
+    ];
+
+    for (var c = 0; c < crops.length; c++) {
+      var crop = crops[c];
+      var cropCanvas = document.createElement('canvas');
+      cropCanvas.width = crop.w;
+      cropCanvas.height = crop.h;
+      var cropCtx = cropCanvas.getContext('2d');
+      cropCtx.drawImage(canvas, crop.x, crop.y, crop.w, crop.h, 0, 0, crop.w, crop.h);
+
+      // Show in debug
+      if (c === 0) {
+        var dc = document.getElementById('debug-canvas');
+        if (dc) {
+          var dctx = dc.getContext('2d');
+          dc.width = crop.w; dc.height = crop.h;
+          dctx.drawImage(cropCanvas, 0, 0);
+        }
+      }
+
+      // Enhance — try both light and dark text
+      var imageData = cropCtx.getImageData(0, 0, crop.w, crop.h);
+      var data = imageData.data;
+      for (var i = 0; i < data.length; i += 4) {
+        var avg = (data[i] + data[i+1] + data[i+2]) / 3;
+        // Invert for dark-on-light (calculator display)
+        var val = avg > 100 ? 0 : 255;
+        data[i] = data[i+1] = data[i+2] = val;
+      }
+      cropCtx.putImageData(imageData, 0, 0);
+
+      var result = await worker.recognize(cropCanvas);
+      var rawText = result.data.text;
+      var text = rawText.replace(/\s/g,'').replace(/[^0-9]/g,'');
+
+      debugLog('Crop ' + c + ' raw: "' + rawText.trim() + '" → digits: "' + text + '"');
+      document.getElementById('debug-text').textContent = 'Raw: ' + rawText + '\nDigits: ' + text;
+
+      // Look for 4 consecutive digits
+      var match = text.match(/\d{4}/);
+      if (match) {
+        var detected = match[0];
+        debugLog('DETECTED: ' + detected);
+        if (detected !== lastDetected) {
+          lastDetected = detected;
+          statusEl.className = 'found';
+          forceDisplay(detected);
+          setTimeout(function() { statusEl.className = 'scanning'; }, 2000);
+        }
+        return; // Found it, stop trying other crops
       }
     }
-  } catch(e) {}
+  } catch(e) {
+    debugLog('OCR scan error: ' + e.message);
+  }
 }
 
+// ── Init ──────────────────────────────────────────────────────────
 initOCR();
 startCamera();
+
 document.addEventListener('visibilitychange', function() {
   if (!document.hidden && !scanning) startCamera();
 });
