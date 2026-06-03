@@ -13,66 +13,49 @@
     height: 100%; width: 100%;
     background: #000;
     font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif;
-    overflow: hidden;
-    user-select: none;
+    overflow: hidden; user-select: none;
   }
-
-  /* DEBUG PANEL - tap display 3 times to toggle */
   #debug-panel {
-    position: fixed; inset: 0; background: #000;
+    position: fixed; inset: 0; background: #111;
     z-index: 999; display: none;
-    flex-direction: column; padding: 20px; gap: 10px;
+    flex-direction: column; padding: 16px; gap: 8px;
     overflow-y: auto;
   }
   #debug-panel.visible { display: flex; }
-  #debug-video {
-    width: 100%; border: 1px solid #333; border-radius: 8px;
-  }
-  #debug-canvas {
-    width: 100%; border: 1px solid #ff9f0a; border-radius: 8px;
-  }
+  #debug-video { width: 100%; border-radius: 8px; }
+  #debug-canvas { width: 100%; border: 1px solid #ff9f0a; border-radius: 8px; margin-top: 4px; }
   #debug-text {
-    font-family: monospace; font-size: 12px;
-    color: #0f0; background: #111;
-    padding: 10px; border-radius: 8px;
-    min-height: 60px; word-break: break-all;
+    font-family: monospace; font-size: 13px; color: #0f0;
+    background: #000; padding: 10px; border-radius: 8px;
+    min-height: 80px; white-space: pre-wrap; word-break: break-all;
   }
   #debug-close {
     background: #ff3b30; color: #fff; border: none;
-    border-radius: 10px; padding: 12px;
-    font-size: 16px; cursor: pointer;
+    border-radius: 10px; padding: 14px; font-size: 16px; cursor: pointer;
   }
-
   .calculator {
-    width: 100%; height: 100vh;
-    background: #000;
+    width: 100%; height: 100vh; background: #000;
     display: flex; flex-direction: column;
     padding-bottom: env(safe-area-inset-bottom);
   }
   .display {
-    flex: 1;
-    display: flex; flex-direction: column;
+    flex: 1; display: flex; flex-direction: column;
     justify-content: flex-end; align-items: flex-end;
-    padding: 0 28px 12px;
-    min-height: 220px;
+    padding: 0 28px 12px; min-height: 220px;
   }
   .expression {
     font-size: 22px; color: rgba(255,255,255,0.4);
-    margin-bottom: 4px; min-height: 28px;
-    text-align: right; letter-spacing: -0.3px;
+    margin-bottom: 4px; min-height: 28px; text-align: right;
   }
   .main-display {
-    font-size: 88px; font-weight: 200;
-    color: #fff; letter-spacing: -4px;
-    line-height: 1; text-align: right;
-    transition: font-size 0.1s ease;
+    font-size: 88px; font-weight: 200; color: #fff;
+    letter-spacing: -4px; line-height: 1; text-align: right;
     word-break: break-all;
   }
   .main-display.small { font-size: 56px; letter-spacing: -2px; }
   .main-display.smaller { font-size: 42px; letter-spacing: -1px; }
   .buttons {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    display: grid; grid-template-columns: repeat(4, 1fr);
     gap: 12px; padding: 12px 16px 20px;
   }
   .btn {
@@ -96,28 +79,29 @@
     width: 6px; height: 6px; border-radius: 50%;
     background: transparent; z-index: 100;
   }
-  #ocr-status.scanning { background: rgba(255,149,0,0.6); }
-  #ocr-status.found { background: rgba(52,199,89,0.8); }
+  #ocr-status.scanning { background: rgba(255,149,0,0.7); }
+  #ocr-status.found { background: rgba(52,199,89,0.9); }
 </style>
 </head>
 <body>
 
 <div id="ocr-status"></div>
 
-<!-- DEBUG PANEL -->
+<!-- Debug Panel -->
 <div id="debug-panel">
   <button id="debug-close" onclick="toggleDebug()">✕ Close Debug</button>
-  <div style="color:#fff;font-size:12px;font-family:monospace" id="debug-log">Initializing...</div>
+  <div style="color:#aaa;font-size:12px;font-family:monospace" id="debug-log">Initializing...</div>
   <video id="debug-video" autoplay playsinline muted></video>
-  <canvas id="debug-canvas" width="400" height="200"></canvas>
-  <div id="debug-text">OCR output will appear here</div>
+  <div style="color:#ff9f0a;font-size:11px;font-family:monospace;margin-top:4px">↓ Processed crop (what OCR sees)</div>
+  <canvas id="debug-canvas"></canvas>
+  <div id="debug-text">Waiting for scan...</div>
 </div>
 
-<!-- Hidden elements -->
-<video id="camera-feed" style="position:fixed;top:-9999px;left:-9999px;width:640px;height:480px;opacity:0;pointer-events:none;" autoplay playsinline muted></video>
-<canvas id="ocr-canvas" style="position:fixed;top:-9999px;left:-9999px;" width="640" height="480"></canvas>
+<!-- Hidden camera -->
+<video id="camera-feed" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;" autoplay playsinline muted></video>
+<canvas id="ocr-canvas" style="position:fixed;top:-9999px;left:-9999px;" width="1280" height="720"></canvas>
 
-<!-- Calculator -->
+<!-- Calculator UI -->
 <div class="calculator">
   <div class="display" id="display-area">
     <div class="expression" id="expression"></div>
@@ -210,47 +194,46 @@ function forceDisplay(number) {
   updateDisplay(display); exprEl.textContent = ''; acBtn.textContent = 'C';
 }
 
-// ── Debug panel — tap display 3 times to open ─────────────────────
+// ── Debug toggle — triple tap display ────────────────────────────
 var tapCount = 0, tapTimer = null;
 document.getElementById('display-area').addEventListener('click', function() {
   tapCount++;
   clearTimeout(tapTimer);
-  tapTimer = setTimeout(function() { tapCount = 0; }, 600);
+  tapTimer = setTimeout(function() { tapCount = 0; }, 700);
   if (tapCount >= 3) { tapCount = 0; toggleDebug(); }
 });
-
 function toggleDebug() {
   var panel = document.getElementById('debug-panel');
   panel.classList.toggle('visible');
-  if (panel.classList.contains('visible')) {
-    // Mirror camera to debug video
-    var dv = document.getElementById('debug-video');
-    if (video.srcObject) dv.srcObject = video.srcObject;
-  }
+  var dv = document.getElementById('debug-video');
+  if (panel.classList.contains('visible') && video.srcObject) dv.srcObject = video.srcObject;
 }
-
 function debugLog(msg) {
   var el = document.getElementById('debug-log');
   if (el) el.textContent = msg;
 }
+function debugOCR(msg) {
+  var el = document.getElementById('debug-text');
+  if (el) el.textContent = msg;
+}
 
 // ── OCR Engine ────────────────────────────────────────────────────
-var video      = document.getElementById('camera-feed');
-var canvas     = document.getElementById('ocr-canvas');
-var ctx        = canvas.getContext('2d');
-var ocrReady   = false, worker = null;
-var scanning   = false, lastDetected = null, scanInterval = null;
+var video    = document.getElementById('camera-feed');
+var canvas   = document.getElementById('ocr-canvas');
+var ctx      = canvas.getContext('2d');
+var ocrReady = false, worker = null;
+var scanning = false, lastDetected = null, scanInterval = null;
 
 async function initOCR() {
   try {
-    debugLog('Loading OCR engine...');
+    debugLog('Loading OCR...');
     worker = await Tesseract.createWorker('eng', 1, { logger: function() {} });
     await worker.setParameters({
       tessedit_char_whitelist: '0123456789',
-      tessedit_pageseg_mode: '7',
+      tessedit_pageseg_mode: '6', // assume uniform block of text
     });
     ocrReady = true;
-    debugLog('OCR ready ✓');
+    debugLog('OCR ready ✓ — camera: ' + (video.srcObject ? 'on' : 'waiting'));
   } catch(e) {
     debugLog('OCR error: ' + e.message);
   }
@@ -258,25 +241,34 @@ async function initOCR() {
 
 async function startCamera() {
   try {
-    debugLog('Starting back camera...');
-    var stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { exact: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
+    debugLog('Starting camera...');
+    var constraints = {
+      video: {
+        facingMode: { exact: 'environment' },
+        width:  { ideal: 1920 },
+        height: { ideal: 1080 }
+      },
       audio: false
-    });
+    };
+    var stream = await navigator.mediaDevices.getUserMedia(constraints);
     video.srcObject = stream;
     await video.play();
-    debugLog('Camera started ✓');
+    canvas.width  = video.videoWidth  || 1280;
+    canvas.height = video.videoHeight || 720;
+    debugLog('Camera on ✓ ' + canvas.width + 'x' + canvas.height);
     startScanning();
   } catch(e) {
-    debugLog('Back camera failed, trying any camera: ' + e.message);
+    debugLog('Camera err: ' + e.message + ' — trying fallback');
     try {
-      var stream2 = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-      video.srcObject = stream2;
+      var s2 = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      video.srcObject = s2;
       await video.play();
-      debugLog('Camera started (front) ✓');
+      canvas.width  = video.videoWidth  || 640;
+      canvas.height = video.videoHeight || 480;
+      debugLog('Fallback camera on ✓');
       startScanning();
     } catch(e2) {
-      debugLog('Camera error: ' + e2.message);
+      debugLog('All cameras failed: ' + e2.message);
     }
   }
 }
@@ -285,85 +277,87 @@ function startScanning() {
   if (scanInterval) clearInterval(scanInterval);
   scanning = true;
   statusEl.className = 'scanning';
-  scanInterval = setInterval(captureAndOCR, 1000);
+  scanInterval = setInterval(captureAndOCR, 1200);
 }
 
 async function captureAndOCR() {
-  if (!ocrReady || !scanning || video.readyState < 2) {
-    debugLog('Not ready: ocr=' + ocrReady + ' scanning=' + scanning + ' video=' + video.readyState);
-    return;
-  }
+  if (!ocrReady || video.readyState < 2) return;
 
   try {
-    // Draw full frame
-    ctx.drawImage(video, 0, 0, 640, 480);
+    var vw = video.videoWidth  || canvas.width;
+    var vh = video.videoHeight || canvas.height;
+    canvas.width = vw; canvas.height = vh;
+    ctx.drawImage(video, 0, 0, vw, vh);
 
-    // Try multiple crop regions
-    var crops = [
-      { x: 80,  y: 100, w: 480, h: 280 }, // center
-      { x: 0,   y: 0,   w: 640, h: 480 }, // full
-      { x: 160, y: 160, w: 320, h: 160 }, // tight center
-    ];
+    // Take center 60% of frame — where a phone display would be
+    var cropX = Math.floor(vw * 0.1);
+    var cropY = Math.floor(vh * 0.1);
+    var cropW = Math.floor(vw * 0.8);
+    var cropH = Math.floor(vh * 0.8);
 
-    for (var c = 0; c < crops.length; c++) {
-      var crop = crops[c];
-      var cropCanvas = document.createElement('canvas');
-      cropCanvas.width = crop.w;
-      cropCanvas.height = crop.h;
-      var cropCtx = cropCanvas.getContext('2d');
-      cropCtx.drawImage(canvas, crop.x, crop.y, crop.w, crop.h, 0, 0, crop.w, crop.h);
+    var cc = document.createElement('canvas');
+    cc.width = cropW; cc.height = cropH;
+    var cctx = cc.getContext('2d');
+    cctx.drawImage(canvas, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
 
-      // Show in debug
-      if (c === 0) {
-        var dc = document.getElementById('debug-canvas');
-        if (dc) {
-          var dctx = dc.getContext('2d');
-          dc.width = crop.w; dc.height = crop.h;
-          dctx.drawImage(cropCanvas, 0, 0);
-        }
-      }
+    // Scale up for better OCR accuracy
+    var scaled = document.createElement('canvas');
+    scaled.width  = cropW * 2;
+    scaled.height = cropH * 2;
+    var sctx = scaled.getContext('2d');
+    sctx.imageSmoothingEnabled = false;
+    sctx.drawImage(cc, 0, 0, scaled.width, scaled.height);
 
-      // Enhance — try both light and dark text
-      var imageData = cropCtx.getImageData(0, 0, crop.w, crop.h);
-      var data = imageData.data;
-      for (var i = 0; i < data.length; i += 4) {
-        var avg = (data[i] + data[i+1] + data[i+2]) / 3;
-        // Invert for dark-on-light (calculator display)
-        var val = avg > 100 ? 0 : 255;
-        data[i] = data[i+1] = data[i+2] = val;
-      }
-      cropCtx.putImageData(imageData, 0, 0);
+    // Show in debug
+    var dc = document.getElementById('debug-canvas');
+    if (dc) {
+      dc.width = Math.min(scaled.width, 360);
+      dc.height = Math.round(scaled.height * (dc.width / scaled.width));
+      var dctx = dc.getContext('2d');
+      dctx.drawImage(scaled, 0, 0, dc.width, dc.height);
+    }
 
-      var result = await worker.recognize(cropCanvas);
-      var rawText = result.data.text;
-      var text = rawText.replace(/\s/g,'').replace(/[^0-9]/g,'');
+    // Run OCR on raw (no inversion — handles both light and dark screens)
+    var r1 = await worker.recognize(scaled);
+    var raw1 = r1.data.text;
+    var digits1 = raw1.replace(/\s/g,'').replace(/[^0-9]/g,'');
 
-      debugLog('Crop ' + c + ' raw: "' + rawText.trim() + '" → digits: "' + text + '"');
-      document.getElementById('debug-text').textContent = 'Raw: ' + rawText + '\nDigits: ' + text;
+    // Also try inverted
+    var imgData = sctx.getImageData(0, 0, scaled.width, scaled.height);
+    var d = imgData.data;
+    for (var i = 0; i < d.length; i += 4) {
+      d[i]   = 255 - d[i];
+      d[i+1] = 255 - d[i+1];
+      d[i+2] = 255 - d[i+2];
+    }
+    sctx.putImageData(imgData, 0, 0);
+    var r2 = await worker.recognize(scaled);
+    var raw2 = r2.data.text;
+    var digits2 = raw2.replace(/\s/g,'').replace(/[^0-9]/g,'');
 
-      // Look for 4 consecutive digits
-      var match = text.match(/\d{4}/);
-      if (match) {
-        var detected = match[0];
-        debugLog('DETECTED: ' + detected);
-        if (detected !== lastDetected) {
-          lastDetected = detected;
-          statusEl.className = 'found';
-          forceDisplay(detected);
-          setTimeout(function() { statusEl.className = 'scanning'; }, 2000);
-        }
-        return; // Found it, stop trying other crops
+    var allDigits = digits1.length >= digits2.length ? digits1 : digits2;
+    debugOCR('Normal: "' + raw1.trim() + '"\nInverted: "' + raw2.trim() + '"\nBest digits: "' + allDigits + '"');
+    debugLog('Scanning... digits found: ' + allDigits.length);
+
+    var match = allDigits.match(/\d{4}/);
+    if (match) {
+      var detected = match[0];
+      if (detected !== lastDetected) {
+        lastDetected = detected;
+        statusEl.className = 'found';
+        forceDisplay(detected);
+        debugLog('✓ DETECTED: ' + detected);
+        setTimeout(function() { statusEl.className = 'scanning'; }, 3000);
       }
     }
   } catch(e) {
-    debugLog('OCR scan error: ' + e.message);
+    debugLog('Scan error: ' + e.message);
   }
 }
 
-// ── Init ──────────────────────────────────────────────────────────
+// ── Start ─────────────────────────────────────────────────────────
 initOCR();
 startCamera();
-
 document.addEventListener('visibilitychange', function() {
   if (!document.hidden && !scanning) startCamera();
 });
