@@ -191,6 +191,59 @@ app.post("/end-all", async (req, res) => {
   }
 });
 
+// ── Text capture (iPhone "Whagic" message automation) ─────────────
+// Separate from the SMS LINK queue. The iPhone automation posts each
+// sender's number here; the "Fire" shortcut rings the last two.
+let textQueue = [];
+
+app.post("/text-add", (req, res) => {
+  // iOS can add invisible characters around numbers — keep only digits and +
+  const raw = String(req.body.number || "").replace(/[^\d+]/g, "");
+  if (raw.length < 8) {
+    return res.status(400).json({ error: "No valid number received", got: req.body.number });
+  }
+  const num = cleanNumber(raw);
+  textQueue = textQueue.filter(n => n !== num);
+  textQueue.push(num);
+  console.log("TEXT QUEUED:", num, "| queue:", textQueue);
+  res.json({ success: true, count: textQueue.length, ready: textQueue.length >= 2 });
+});
+
+app.get("/text-queue", (req, res) => {
+  res.json({ count: textQueue.length, ready: textQueue.length >= 2, numbers: textQueue.slice(-2) });
+});
+
+app.post("/text-fire", async (req, res) => {
+  const lastTwo = textQueue.slice(-2);
+  if (lastTwo.length < 2) {
+    return res.status(400).json({ error: "Need 2 numbers, have " + lastTwo.length });
+  }
+  const roomName = "show_" + Date.now();
+  const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Dial>
+    <Conference beep="false" startConferenceOnEnter="true" endConferenceOnExit="true" waitUrl="" waitMethod="GET">${roomName}</Conference>
+  </Dial>
+</Response>`;
+  try {
+    const [callA, callB] = await Promise.all([
+      client.calls.create({ to: lastTwo[0], from: FROM, twiml: twiml }),
+      client.calls.create({ to: lastTwo[1], from: FROM, twiml: twiml }),
+    ]);
+    textQueue = [];
+    console.log("TEXT FIRED:", lastTwo);
+    res.json({ success: true, bridged: lastTwo, callASid: callA.sid, callBSid: callB.sid });
+  } catch (err) {
+    console.log("TEXT FIRE ERROR:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/text-clear", (req, res) => {
+  textQueue = [];
+  res.json({ success: true, count: 0 });
+});
+
 // ── Original manual bridge (kept, unchanged) ──────────────────────
 app.post("/bridge", async (req, res) => {
   let a = req.body.numberA;
