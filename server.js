@@ -13,13 +13,13 @@ const client = twilio(
   process.env.TWILIO_AUTH_TOKEN
 );
 
-const FROM = "+14452942442";
+const FROM = "+96567622229"; // TEST: verified Kuwaiti caller ID (was "+14452942442")
 
 // ── Trigger / reset words ─────────────────────────────────────────
 const TRIGGER_WORD = "LINK";
 const RESET_WORD   = "CLEAR";
 
-// ── In-memory queue of numbers that texted LINK ──────────────────
+// ── In-memory queue of numbers that texted LINK ───────────────────
 // Note: resets if the server restarts. Fine for same-session use.
 let queue = [];
 
@@ -72,7 +72,7 @@ app.post("/sms", (req, res) => {
   res.type("text/xml").send('<?xml version="1.0" encoding="UTF-8"?><Response></Response>');
 });
 
-// ── Check the queue (for the Shortcut's "Check" step) ────────────
+// ── Check the queue (for the Shortcut's "Check" step) ─────────────
 app.get("/queue", (req, res) => {
   const lastTwo = queue.slice(-2);
   res.json({
