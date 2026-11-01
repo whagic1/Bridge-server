@@ -132,6 +132,22 @@ app.post("/clear-queue", (req, res) => {
   res.json({ success: true, count: 0 });
 });
 
+// ── Hang up ALL active calls (for the "End Bridge" Shortcut) ───────
+// Ends every ringing/in-progress call on the account. No call IDs needed.
+app.post("/end-everything", async (req, res) => {
+  try {
+    const ringing    = await client.calls.list({ status: "ringing", limit: 50 });
+    const inProgress = await client.calls.list({ status: "in-progress", limit: 50 });
+    const all = ringing.concat(inProgress);
+    await Promise.all(all.map(c => client.calls(c.sid).update({ status: "completed" })));
+    console.log("Ended", all.length, "active call(s)");
+    res.json({ success: true, ended: all.length });
+  } catch (err) {
+    console.log("END ERROR:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── Original manual bridge (kept, unchanged) ──────────────────────
 app.post("/bridge", async (req, res) => {
   let a = req.body.numberA;
