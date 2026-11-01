@@ -19,12 +19,28 @@ const FROM = "+14452942442";
 const TRIGGER_WORD = "LINK";
 const RESET_WORD   = "CLEAR";
 
-// ── In-memory queue of numbers that texted LINK ───────────────────
+// ── In-memory queue of numbers that texted LINK ──────────────────
 // Note: resets if the server restarts. Fine for same-session use.
 let queue = [];
 
 function normalize(num) {
   return (num || "").trim();
+}
+
+// Turn any pasted format into E.164 for Kuwait.
+// "6762 2229" / "66762229" (8-digit local)  -> "+965XXXXXXXX"
+// "965XXXXXXXX" -> "+965XXXXXXXX"
+// "00965XXXXXXXX" -> "+965XXXXXXXX"
+// "+965 XXXX XXXX" -> "+965XXXXXXXX"
+function cleanNumber(raw) {
+  let n = (raw || "").replace(/[\s\-()]/g, ""); // strip spaces, dashes, parens
+  if (n.startsWith("00")) n = "+" + n.slice(2);
+  if (!n.startsWith("+")) {
+    if (n.startsWith("965"))      n = "+" + n;
+    else if (n.length === 8)      n = "+965" + n; // Kuwaiti domestic 8-digit
+    else                          n = "+" + n;
+  }
+  return n;
 }
 
 // ── Health ────────────────────────────────────────────────────────
@@ -118,12 +134,14 @@ app.post("/clear-queue", (req, res) => {
 
 // ── Original manual bridge (kept, unchanged) ──────────────────────
 app.post("/bridge", async (req, res) => {
-  const numberA = req.body.numberA;
-  const numberB = req.body.numberB;
-
-  if (!numberA || !numberB) {
+  if (!req.body.numberA || !req.body.numberB) {
     return res.status(400).json({ error: "Both numbers required" });
   }
+
+  // Normalize pasted numbers (handles 8-digit local, 965..., spaces, etc.)
+  const numberA = cleanNumber(req.body.numberA);
+  const numberB = cleanNumber(req.body.numberB);
+  console.log("BRIDGE:", req.body.numberA, "->", numberA, "|", req.body.numberB, "->", numberB);
 
   const roomName = "show_" + Date.now();
   const twiml = `<?xml version="1.0" encoding="UTF-8"?>
