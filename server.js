@@ -104,10 +104,12 @@ app.post("/fire-queue", async (req, res) => {
 </Response>`;
 
   try {
-    const callA = await client.calls.create({ to: numberA, from: FROM, twiml: twiml });
-    console.log("Call A SID:", callA.sid);
-    const callB = await client.calls.create({ to: numberB, from: FROM, twiml: twiml });
-    console.log("Call B SID:", callB.sid);
+    // Place both calls at the same instant
+    const [callA, callB] = await Promise.all([
+      client.calls.create({ to: numberA, from: FROM, twiml: twiml }),
+      client.calls.create({ to: numberB, from: FROM, twiml: twiml }),
+    ]);
+    console.log("Call SIDs:", callA.sid, callB.sid);
 
     // Auto-clear after firing
     queue = [];
@@ -166,11 +168,11 @@ app.post("/bridge-all", async (req, res) => {
 </Response>`;
 
   try {
-    const callSids = [];
-    for (const to of numbers) {
-      const call = await client.calls.create({ to: to, from: FROM, twiml: twiml });
-      callSids.push(call.sid);
-    }
+    // Place all calls at the same instant
+    const calls = await Promise.all(
+      numbers.map(to => client.calls.create({ to: to, from: FROM, twiml: twiml }))
+    );
+    const callSids = calls.map(c => c.sid);
     res.json({ success: true, room: roomName, callSids: callSids, count: callSids.length });
   } catch (err) {
     console.log("BRIDGE-ALL ERROR:", err.message);
@@ -223,8 +225,11 @@ app.post("/bridge", async (req, res) => {
 </Response>`;
 
   try {
-    const callA = await client.calls.create({ to: numberA, from: FROM, twiml: twiml });
-    const callB = await client.calls.create({ to: numberB, from: FROM, twiml: twiml });
+    // Place both calls at the same instant
+    const [callA, callB] = await Promise.all([
+      client.calls.create({ to: numberA, from: FROM, twiml: twiml }),
+      client.calls.create({ to: numberB, from: FROM, twiml: twiml }),
+    ]);
     res.json({ success: true, room: roomName, callASid: callA.sid, callBSid: callB.sid });
   } catch (err) {
     res.status(500).json({ error: err.message });
