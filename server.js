@@ -148,6 +148,47 @@ app.post("/end-everything", async (req, res) => {
   }
 });
 
+// ── Multi-number bridge (used by the webpage) ─────────────────────
+app.post("/bridge-all", async (req, res) => {
+  const raw = req.body.numbers;
+  if (!Array.isArray(raw) || raw.length < 2) {
+    return res.status(400).json({ error: "At least 2 numbers required" });
+  }
+  const numbers = raw.map(cleanNumber);
+  const roomName = "show_" + Date.now();
+  console.log("BRIDGE-ALL:", numbers);
+
+  const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Dial>
+    <Conference beep="false" startConferenceOnEnter="true" endConferenceOnExit="true" waitUrl="" waitMethod="GET">${roomName}</Conference>
+  </Dial>
+</Response>`;
+
+  try {
+    const callSids = [];
+    for (const to of numbers) {
+      const call = await client.calls.create({ to: to, from: FROM, twiml: twiml });
+      callSids.push(call.sid);
+    }
+    res.json({ success: true, room: roomName, callSids: callSids, count: callSids.length });
+  } catch (err) {
+    console.log("BRIDGE-ALL ERROR:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── End specific calls (used by the webpage's "end + reset") ──────
+app.post("/end-all", async (req, res) => {
+  const callSids = req.body.callSids || [];
+  try {
+    await Promise.all(callSids.map(sid => client.calls(sid).update({ status: "completed" }).catch(() => null)));
+    res.json({ success: true, ended: callSids.length });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── Original manual bridge (kept, unchanged) ──────────────────────
 app.post("/bridge", async (req, res) => {
   let a = req.body.numberA;
