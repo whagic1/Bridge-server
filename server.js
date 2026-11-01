@@ -13,7 +13,7 @@ const client = twilio(
   process.env.TWILIO_AUTH_TOKEN
 );
 
-const FROM = "+96567622229"; // TEST: verified Kuwaiti caller ID (was "+14452942442")
+const FROM = "+14452942442";
 
 // ── Trigger / reset words ─────────────────────────────────────────
 const TRIGGER_WORD = "LINK";
