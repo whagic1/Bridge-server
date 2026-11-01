@@ -134,14 +134,28 @@ app.post("/clear-queue", (req, res) => {
 
 // ── Original manual bridge (kept, unchanged) ──────────────────────
 app.post("/bridge", async (req, res) => {
-  if (!req.body.numberA || !req.body.numberB) {
+  let a = req.body.numberA;
+  let b = req.body.numberB;
+
+  // Allow a single "pair" field: both numbers, one per line (or comma-separated).
+  if (req.body.pair) {
+    const lines = String(req.body.pair).split(/[\r\n]+/).map(s => s.trim()).filter(Boolean);
+    if (lines.length >= 2) {
+      a = lines[0]; b = lines[1];
+    } else {
+      const parts = String(req.body.pair).split(/[,;]+|\s{2,}/).map(s => s.trim()).filter(Boolean);
+      if (parts.length >= 2) { a = parts[0]; b = parts[1]; }
+    }
+  }
+
+  if (!a || !b) {
     return res.status(400).json({ error: "Both numbers required" });
   }
 
   // Normalize pasted numbers (handles 8-digit local, 965..., spaces, etc.)
-  const numberA = cleanNumber(req.body.numberA);
-  const numberB = cleanNumber(req.body.numberB);
-  console.log("BRIDGE:", req.body.numberA, "->", numberA, "|", req.body.numberB, "->", numberB);
+  const numberA = cleanNumber(a);
+  const numberB = cleanNumber(b);
+  console.log("BRIDGE:", a, "->", numberA, "|", b, "->", numberB);
 
   const roomName = "show_" + Date.now();
   const twiml = `<?xml version="1.0" encoding="UTF-8"?>
