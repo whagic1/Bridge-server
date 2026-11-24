@@ -146,7 +146,7 @@
     cursor: pointer; padding: 8px 0; display: block;
     margin-top: 8px;
   }
-  #url-box {
+  #url-box, #key-box {
     width: 100%; background: #111;
     border: 1px solid #1e1e1e; border-radius: 8px;
     padding: 11px 12px; color: #555;
@@ -275,6 +275,7 @@
 
   <button id="url-toggle" onclick="toggleUrl()">▼ server url</button>
   <input type="url" id="url-box" value="https://bridge-server-production-a25d.up.railway.app">
+  <input type="password" id="key-box" placeholder="secret key" autocomplete="off" oninput="saveKey()">
 
   <button class="btn-main btn-inactive" id="arm-btn" onclick="arm()">ADD AT LEAST 2 NUMBERS</button>
 </div>
@@ -326,9 +327,26 @@
     }
   }
 
+  // Secret key: typed once into the settings field, remembered on this phone
+  function loadKey() {
+    try { return localStorage.getItem('bridgeKey') || ''; } catch(e) { return ''; }
+  }
+  function saveKey() {
+    var k = document.getElementById('key-box').value.trim();
+    try { localStorage.setItem('bridgeKey', k); } catch(e) {}
+  }
+  function apiHeaders() {
+    return { 'Content-Type': 'application/json', 'X-Bridge-Key': document.getElementById('key-box').value.trim() };
+  }
+  function openSettings() {
+    urlOpen = false;
+    toggleUrl();
+  }
+
   function toggleUrl() {
     urlOpen = !urlOpen;
     document.getElementById('url-box').style.display = urlOpen ? 'block' : 'none';
+    document.getElementById('key-box').style.display = urlOpen ? 'block' : 'none';
     document.getElementById('url-toggle').textContent = urlOpen ? '▲ server url' : '▼ server url';
   }
 
@@ -422,10 +440,21 @@
 
     fetch(SERVER + '/bridge-all', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: apiHeaders(),
       body: JSON.stringify({ numbers: nums })
     })
-    .then(function(res) { return res.json(); })
+    .then(function(res) {
+      if (res.status === 401) {
+        // Wrong or missing key: back to setup with the key field open
+        hasFired = false;
+        showScreen('screen-setup');
+        openSettings();
+        document.getElementById('key-box').focus();
+        vibe([400]);
+        throw 'key';
+      }
+      return res.json();
+    })
     .then(function(data) {
       if (data.error) throw new Error(data.error);
       callSids = data.callSids || [];
@@ -435,6 +464,7 @@
       vibe([50,30,50,30,50]);
     })
     .catch(function(err) {
+      if (err === 'key') return;
       hasFired = false;
       document.getElementById('armed-sub').textContent = 'RETRY';
       document.getElementById('armed-sub').style.color = '#ff3b30';
@@ -451,7 +481,7 @@
     if (callSids.length > 0) {
       fetch(SERVER + '/end-all', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: apiHeaders(),
         body: JSON.stringify({ callSids: callSids })
       }).catch(function(){});
     }
@@ -462,6 +492,8 @@
     updateCount();
     showScreen('screen-setup');
   }
+
+  document.getElementById('key-box').value = loadKey();
 
   // Start with 2 inputs ready
   addNumber();

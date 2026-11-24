@@ -15,6 +15,22 @@ const client = twilio(
 
 const FROM = "+14452942442";
 
+// ── Secret key ────────────────────────────────────────────────────
+// Set BRIDGE_KEY in Railway → Variables. Until it is set, nothing is
+// locked (so deploying this changes nothing). Once set, every command
+// must carry the key: header "X-Bridge-Key", or "?key=..." in the URL.
+// Open on purpose: the webpage files, /health, and /sms (Twilio's webhook).
+const BRIDGE_KEY = process.env.BRIDGE_KEY || "";
+const OPEN_PATHS = ["/health", "/sms"];
+
+app.use((req, res, next) => {
+  if (!BRIDGE_KEY) return next();
+  if (OPEN_PATHS.includes(req.path)) return next();
+  const given = req.get("X-Bridge-Key") || req.query.key || "";
+  if (given === BRIDGE_KEY) return next();
+  res.status(401).json({ error: "Unauthorized" });
+});
+
 // ── Trigger / reset words ─────────────────────────────────────────
 const TRIGGER_WORD = "LINK";
 const RESET_WORD   = "CLEAR";
@@ -45,7 +61,7 @@ function cleanNumber(raw) {
 
 // ── Health ────────────────────────────────────────────────────────
 app.get("/health", (req, res) => {
-  res.json({ status: "ok", queued: queue.length });
+  res.json({ status: "ok", queued: queue.length, locked: !!BRIDGE_KEY });
 });
 
 // ── Twilio incoming SMS webhook ───────────────────────────────────
